@@ -2,11 +2,12 @@
 // Global context
 var shots = [];
 
-var currentScale = 1;
-var scaleFactor = 0.001; // Adjust this value to control the zoom speed
-
-var offsetX = 0;
-var offsetY = 0;
+var gestureStartScale = 0;
+var scale = 1;
+var posX = 0;
+var posY = 0;
+var startX;
+var startY;
 
 /* 9:16 aspect ratio, adjust width and height as needed */
 const rectangleWidth = 180;
@@ -114,31 +115,54 @@ function setupImageListeners() {
     });
 
     // Detect the wheel event (including the trackpad pinch gesture)
-    window.addEventListener('wheel', function (event) {
-        // event.preventDefault();
+    window.addEventListener('wheel', function (e) {
+        e.preventDefault();
 
         // Zoom mode
-        if (event.ctrlKey) {
-            var newScale = currentScale + (event.deltaY * scaleFactor);
+        if (e.ctrlKey) {
+            var newScale = scale - e.deltaY * 0.01;
 
             // Limit the scale to a reasonable range (e.g., between 0.5 and 2)
             newScale = Math.max(0.1, Math.min(newScale, 3));
 
             // Update the current scale for the next wheel event
-            currentScale = newScale;
+            scale = newScale;
         } else {
             // Pan mode
             if (naturalScroll) {
-                offsetX += (event.deltaX);
-                offsetY += (event.deltaY);
+                posX += (e.deltaX) * 2;
+                posY += (e.deltaY) * 2;
             } else {
-                offsetX -= (event.deltaX);
-                offsetY -= (event.deltaY);
+                posX -= (e.deltaX) * 2;
+                posY -= (e.deltaY) * 2;
             }
         }
-        document.getElementById('image').style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+        document.getElementById('image').style.transform = `translate3D(${posX}px, ${posY}px, 0px) scale(${scale})`;
         // Keep the rectangles in the same place
-    });
+    }, {passive: false});
+
+    window.addEventListener("gesturestart", function (e) {
+        e.preventDefault();
+        startX = e.pageX - posX;
+        startY = e.pageY - posY;
+        gestureStartScale = scale;
+      });
+
+      window.addEventListener("gesturechange", function (e) {
+        e.preventDefault();
+
+        scale = gestureStartScale * e.scale;
+
+        posX = e.pageX - startX;
+        posY = e.pageY - startY;
+
+        document.getElementById('image').style.transform = `translate3D(${posX}px, ${posY}px, 0px) scale(${scale})`;
+      });
+
+      window.addEventListener("gestureend", function (e) {
+        e.preventDefault();
+      });
+
 
     document.addEventListener('click', function (event) {
         // Add a little indicator of where you are
