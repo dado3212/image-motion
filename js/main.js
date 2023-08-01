@@ -82,11 +82,8 @@ function uploadImage(file) {
             minScale = Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
             maxScale = 10 * Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
 
-            offsetX = (tabWidth - rawImage.width) / 2;
+            offsetX = (tabWidth - 350 - rawImage.width) / 2;
             document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
-
-            // Make the container visible
-            document.getElementById('container').style.display = "initial";
 
             // Set up the rectangle
             document.getElementById('rectangle').style.display = "initial";
@@ -176,6 +173,8 @@ function setupImageListeners() {
         addRectangle(event);
 
         // And take a screenshot of that section of the canvas
+
+
         // And add it to a floating UI of all of the shots
     });
 }
@@ -330,7 +329,7 @@ function createCommand() {
         yExpression += ')';
         zoomExpression += ')';
     }
-    // command = command.substring(0, command.length - 1);
+
     command += xExpression + "'";
     command += yExpression + "'";
     command += zoomExpression + "'";
@@ -339,11 +338,11 @@ function createCommand() {
     command += '" -t ' + durationSeconds + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
 
     return command;
-    //     ffmpeg -loop 1 -i /Users/abeals/Downloads/Spencer_16.jpg \
-    // -filter_complex "\
-    //    [0:v]zoompan=z='min(zoom+0.0015,1.5)':d=125:x='if(lte(on,1),iw/2,iw/2-160)':y='if(lte(on,1),ih/2,ih/2-90)':s=1920x1080, \
-    //    zoompan=z='1.5':d=375:x='iw/2-160':y='ih/2-90+0.0005*on*ih':s=1920x1080:fps=25, \
-    //    zoompan=z='min(zoom+0.0005,1.5)':d=125:x='iw/2-160':y='ih/2-90+0.001*on*ih':s=1920x1080:fps=25, \
-    //    zoompan=z='min(max(zoom,1.5),1.5+0.0001*(on-625))':d=500:x='iw/2-160':y='ih/2-90+0.0005*on*ih':s=1920x1080:fps=25" \
-    //    -t 10 -pix_fmt yuv420p -y output_video.mp4
+}
+
+function clearFrames() {
+    for (var i = 0; i < shots.length; i++) {
+        shots[i].remove();
+    }
+    shots = [];
 }

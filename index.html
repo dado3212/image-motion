@@ -9,9 +9,14 @@
 
     <body dropzone>
         <div id="rectangle" class="rectangle" style="display: none;"></div>
-        <div id="container" style="display: none;">
-            <div id="image">
-                <img id="rawImage">
+        <div class="">
+            <div id="container">
+                <div id="image">
+                    <img id="rawImage">
+                </div>
+            </div>
+            <div id="sidebar">
+                <button onclick="event.stopPropagation(); clearFrames()">Reset All</button>
             </div>
         </div>
     </body>
