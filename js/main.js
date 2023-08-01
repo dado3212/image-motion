@@ -6,8 +6,11 @@ var gestureStartScale = 0;
 var scale = 1;
 var posX = 0;
 var posY = 0;
+
 var startX;
 var startY;
+var minScale; // The size of the image
+var maxScale; // zoompan by default only supports a scale of 10
 
 /* 9:16 aspect ratio, adjust width and height as needed */
 const rectangleWidth = 180;
@@ -75,6 +78,10 @@ function uploadImage(file) {
 
             rawImage.width = tabHeight * originalWidth / originalHeight;
             rawImage.height = tabHeight;
+
+            minScale = Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
+            maxScale = 10 * Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
+
             offsetX = (tabWidth - rawImage.width) / 2;
             document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
 
@@ -122,8 +129,8 @@ function setupImageListeners() {
         if (e.ctrlKey) {
             var newScale = scale - e.deltaY * 0.01;
 
-            // Limit the scale to a reasonable range (e.g., between 0.5 and 2)
-            newScale = Math.max(0.1, Math.min(newScale, 3));
+            // Limit the scaling from fully zoomed out to 10x
+            newScale = Math.max(minScale, Math.min(newScale, maxScale));
 
             // Update the current scale for the next wheel event
             scale = newScale;
@@ -186,12 +193,12 @@ function addRectangle(event) {
     const originalBounding = originalElement.getBoundingClientRect();
     const imageBounding = document.getElementById('image').getBoundingClientRect();
 
-    const x = (originalBounding.left - imageBounding.left) / currentScale;
-    const y = (originalBounding.top - imageBounding.top) / currentScale;
+    const x = (originalBounding.left - imageBounding.left) / scale;
+    const y = (originalBounding.top - imageBounding.top) / scale;
 
     newRectangle.style.left = x + 'px';
     newRectangle.style.top = y + 'px';
-    newRectangle.style.transform = `scale(${1 / currentScale})`;
+    newRectangle.style.transform = `scale(${1 / scale})`;
 
     const span = document.createElement('span');
     span.innerHTML = (shots.length + 1)
