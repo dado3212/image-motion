@@ -159,19 +159,13 @@ function addRectangle(event) {
     const x = (originalBounding.left - imageBounding.left) / currentScale;
     const y = (originalBounding.top - imageBounding.top) / currentScale;
 
-    // // Get the current mouse position, and use that to set left/top
-    // var rect = event.target.getBoundingClientRect();
-    // var x = event.clientX - rect.left - (rectangleWidth / currentScale / 2);
-    // var y = event.clientY - rect.top - (rectangleHeight / currentScale / 2);
-
-    // // Set the new position for the rectangle
-    // const img = document.getElementById('rawImage');
-
     newRectangle.style.left = x + 'px';
     newRectangle.style.top = y + 'px';
     newRectangle.style.transform = `scale(${1/currentScale})`;
-    // newRectangle.style.width = rectangleWidth / currentScale;
-    // newRectangle.style.height = rectangleHeight / currentScale;
+
+    const span = document.createElement('span');
+    span.innerHTML = (shots.length + 1)
+    newRectangle.appendChild(span);
 
     shots.push(newRectangle);
 }

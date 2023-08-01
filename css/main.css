@@ -20,6 +20,23 @@ body {
     transform-origin: 0 0;
 }
 
+.rectangle span {
+    color: white;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu;
+    font-size: 50px;
+    display: inline-block;
+    background-color: rgb(2 155 210 / 70%);
+    width: 65px;
+    line-height: 65px;
+    height: 65px;
+    border-radius: 50%;
+    text-align: center;
+    border: 3px solid rgb(2 155 210);
+    position: relative;
+    top: calc(50% - 32.5px);
+    left: calc(50% - 32.5px);
+}
+
 body {
     margin: 0;
 }
