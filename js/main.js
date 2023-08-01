@@ -1,67 +1,55 @@
 function drop(evt) {
     evt.stopPropagation();
     evt.preventDefault();
+    // If I ever want to use an upload from somewhere else?
     // var imageUrl = evt.dataTransfer.getData('URL');
 
-  // Get the dropped file from the event data
-  const file = evt.dataTransfer.files[0];
-  console.log(file.type);
+    // Get the dropped file from the event data
+    const file = evt.dataTransfer.files[0];
 
-  // Check if the dropped file is an image
-  if (file && file.type.startsWith('image/')) {
-    // Create a FileReader object to read the file
-    const reader = new FileReader();
+    if (file.type === 'image/tiff') {
+        // Yell about this one :D
+        alert('This currently doesn\'t accept TIFFs.');
+        // brew install imagemagick
+        // convert -flatten -density 72 -depth 16 -quality 75 -units PixelsPerInch -interlace JPEG -define jpeg:dct-method=float "$file" ./converted/"$base".jpg
+        return;
+    }
 
-    // Set up the FileReader event when the image is loaded
-    reader.onload = (e) => {
-        console.log(e);
-      // Set the image source to the loaded data URL
-      document.getElementById('imageDisplay').src = e.target.result;
+    const imageDisplay = document.getElementById('imageDisplay');
 
-    };
+    // Check if the dropped file is an image
+    if (file && file.type.startsWith('image/')) {
+        // Create a FileReader object to read the file
+        const reader = new FileReader();
 
-    reader.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          console.log(progress);
-        //   progressBar.value = progress;
-        }
-      };
+        // Set up the FileReader event when the image is loaded
+        reader.onload = async (e) => {
 
-    // Read the file as a data URL
-    reader.readAsDataURL(file);
-} else {
-    // TODO: Handle the error case
-}
+            const tempImage = new Image();
 
-    // // Update form and image
-    // $('#image').css('background-image', 'url(' + imageUrl + ')');
-    // $('#image').removeClass('blank');
-    // $('form input[name="url"]').val(imageUrl);
+            tempImage.onload = () => {
+                // Get the dimensions of the dropped image
+                const width = tempImage.width;
+                const height = tempImage.height;
 
-    // $('#chosen span').html(imageUrl);
+                // Set the JPG data URL as the source of the image
+                imageDisplay.src = jpgDataURL;
+            };
 
-    // // Update all of the relevant images (and possible warning)
-    // $.post("similar.php", { url: imageUrl })
-    //     .done(function (data) {
-    //         var similar = JSON.parse(data);
-    //         if (similar.status == "success") {
-    //             var n = "";
-    //             for (var url in similar.closest) {
-    //                 var thumbnail = url.substring(0, url.length - 4) + "t" + url.substring(url.length - 4);
-    //                 n += '<div class="image" style="background-image: url(' + thumbnail + ');" data-similarity="' + similar.closest[url] + '"></div>';
-    //             }
-    //             $('#similar').html(n);
-    //         }
-    //     });
-}
+            tempImage.src = e.target.result;
+        };
 
-function verify(evt) {
-    if ($('form input[name="url"]').val() == "") {
-        alert('Choose an image to upload!');
-        evt.preventDefault();
-        return false;
+        reader.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const progress = (event.loaded / event.total) * 100;
+                console.log(progress);
+                //   progressBar.value = progress;
+            }
+        };
+
+        // Read the file as a data URL
+        reader.readAsDataURL(file);
     } else {
-        return true;
+        // TODO: Handle the error case
     }
 }
