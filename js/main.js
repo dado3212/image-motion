@@ -15,6 +15,8 @@ function drop(evt) {
         return;
     }
 
+    const naturalScroll = isNaturalScrolling();
+
     const imageDisplay = document.getElementById('imageDisplay');
 
     // Check if the dropped file is an image
@@ -54,32 +56,35 @@ function drop(evt) {
                 var currentScale = 1;
                 var scaleFactor = 0.001; // Adjust this value to control the zoom speed
 
-                // Detect the wheel event (including the trackpad pinch gesture)
-                window.addEventListener('wheel', function(event) {
-                    // event.preventDefault();
+                var offsetX = 0;
+                var offsetY = 0;
 
-                    // Calculate the new scale based on the wheel event
-                    var wheelDelta = event.deltaY;
+                // Detect the wheel event (including the trackpad pinch gesture)
+                window.addEventListener('wheel', function (event) {
+                    // event.preventDefault();
 
                     // Zoom mode
                     if (event.ctrlKey) {
-                        var newScale = currentScale + (wheelDelta * scaleFactor);
+                        var newScale = currentScale + (event.deltaY * scaleFactor);
 
                         // Limit the scale to a reasonable range (e.g., between 0.5 and 2)
                         newScale = Math.max(0.1, Math.min(newScale, 3));
 
                         console.log(newScale);
 
-                        // Apply the new scale transformation to the image
-                        imageDisplay.style.transform = `scale(${newScale})`;
-
                         // Update the current scale for the next wheel event
                         currentScale = newScale;
                     } else {
                         // Pan mode
-
+                        if (naturalScroll) {
+                            offsetX += (event.deltaX);
+                            offsetY += (event.deltaY);
+                        } else {
+                            offsetX -= (event.deltaX);
+                            offsetY -= (event.deltaY);
+                        }
                     }
-
+                    imageDisplay.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
                 });
             };
             imageDisplay.src = e.target.result;
@@ -99,3 +104,19 @@ function drop(evt) {
         // TODO: Handle the error case
     }
 }
+
+function isNaturalScrolling() {
+    // Create a dummy element
+    var dummyElement = document.createElement('div');
+    // Apply the webkitOverflowScrolling property to the dummy element
+    dummyElement.style.webkitOverflowScrolling = 'touch';
+
+    // Get the computed style of the dummy element
+    var style = window.getComputedStyle(dummyElement);
+
+    // Check if the value of webkitOverflowScrolling is 'touch' (natural scrolling)
+    const answer =  style.webkitOverflowScrolling === 'touch';
+
+    dummyElement.remove();
+    return answer;
+  }
