@@ -12,6 +12,11 @@ var offsetY = 0;
 const rectangleWidth = 180;
 const rectangleHeight = 320;
 
+let originalWidth = 0;
+let originalHeight = 0;
+
+let file_name = '';
+
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
@@ -30,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Get the dropped file from the event data
         const file = evt.dataTransfer.files[0];
+        file_name = file.name;
 
         if (file.type === 'image/tiff') {
             // Yell about this one :D
@@ -61,12 +67,12 @@ function uploadImage(file) {
     reader.onload = (e) => {
         rawImage.onload = (e) => {
             // Scale the image and set the URL
-            const width = rawImage.width;
-            const height = rawImage.height;
+            originalWidth = rawImage.width;
+            originalHeight = rawImage.height;
             const tabHeight = window.innerHeight - 15;
             const tabWidth = window.innerWidth;
 
-            rawImage.width = tabHeight * width / height;
+            rawImage.width = tabHeight * originalWidth / originalHeight;
             rawImage.height = tabHeight;
             offsetX = (tabWidth - rawImage.width) / 2;
             document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
@@ -161,13 +167,15 @@ function addRectangle(event) {
 
     newRectangle.style.left = x + 'px';
     newRectangle.style.top = y + 'px';
-    newRectangle.style.transform = `scale(${1/currentScale})`;
+    newRectangle.style.transform = `scale(${1 / currentScale})`;
 
     const span = document.createElement('span');
     span.innerHTML = (shots.length + 1)
     newRectangle.appendChild(span);
 
     shots.push(newRectangle);
+
+    console.log(createCommand());
 }
 
 function isNaturalScrolling() {
@@ -184,4 +192,56 @@ function isNaturalScrolling() {
 
     dummyElement.remove();
     return answer;
+}
+
+function createCommand() {
+    // Can't animate a single keyframe, just crop the image dumbass.
+    if (shots.length <= 1) {
+        return '';
+    }
+
+    const durationSeconds = 10; // number of seconds
+    const fps = 30; // fps
+
+    const duration = durationSeconds * fps;
+
+    const rawImage = document.getElementById('rawImage');
+    const offsetScale = originalWidth / rawImage.width;
+    console.log(rawImage.width, rawImage, originalWidth);
+
+    let command = 'ffmpeg';
+    // command += ' -loop 1'; // not sure if this does anything
+    command += ' -i ' + file_name; // input file from the upload (run in directory)
+    command += ' -loglevel error'; // suppress everything but errors for now
+    command += ' -filter_complex "'; // We are going to create a complex filter using zoompan
+
+    // For each shot, we need to get its x/y.
+    for (var i = 0; i < shots.length - 1; i++) {
+        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale;
+        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale;
+
+        const x2 = parseInt(shots[i+1].style.left.slice(0, -2)) * offsetScale;
+        const y2 = parseInt(shots[i+1].style.top.slice(0, -2)) * offsetScale;
+
+        command += 'zoompan=' // start the zoompan
+            + "z='4'" // zoom expression
+            + ":d=" + duration // number of frames for the effect (defaults to 90)
+            + ":x='" + x1 + " + " + (x2 - x1) + " * on/" + duration + "'" // x expression (a = input width/input height)
+            + ":y='" + y1 + " + " + (y2 - y1) + " * on/" + duration + "'" // y expression
+            + ":fps=" + fps
+            + ":s=1080x1920" // 9:16 output image size
+            + ","; // comma to deliminate
+    }
+    command = command.substring(0, command.length - 1);
+
+    command += ',scale=iw:ih" -t 10 -pix_fmt yuv420p -y output_video.mp4'; // suffix
+
+    return command;
+    //     ffmpeg -loop 1 -i /Users/abeals/Downloads/Spencer_16.jpg \
+    // -filter_complex "\
+    //    [0:v]zoompan=z='min(zoom+0.0015,1.5)':d=125:x='if(lte(on,1),iw/2,iw/2-160)':y='if(lte(on,1),ih/2,ih/2-90)':s=1920x1080, \
+    //    zoompan=z='1.5':d=375:x='iw/2-160':y='ih/2-90+0.0005*on*ih':s=1920x1080:fps=25, \
+    //    zoompan=z='min(zoom+0.0005,1.5)':d=125:x='iw/2-160':y='ih/2-90+0.001*on*ih':s=1920x1080:fps=25, \
+    //    zoompan=z='min(max(zoom,1.5),1.5+0.0001*(on-625))':d=500:x='iw/2-160':y='ih/2-90+0.0005*on*ih':s=1920x1080:fps=25" \
+    //    -t 10 -pix_fmt yuv420p -y output_video.mp4
 }
