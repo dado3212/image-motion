@@ -207,16 +207,37 @@ function createCommand() {
 
     const rawImage = document.getElementById('rawImage');
     const offsetScale = originalWidth / rawImage.width;
-    console.log(rawImage.width, rawImage, originalWidth);
+
+    // This value is currently the adjustment that we use to scale the rectangle
+    // But we need to convert it into the scale of the IMAGE
+    var zoomScalar = 1;
+    var ffmpegOffsetX = 0;
+    var ffmpegOffsetY = 0;
 
     let command = 'ffmpeg';
     // command += ' -loop 1'; // not sure if this does anything
     command += ' -i ' + file_name; // input file from the upload (run in directory)
     command += ' -loglevel error'; // suppress everything but errors for now
     command += ' -filter_complex "'; // We are going to create a complex filter using zoompan
+
+    // If an image is not 9:16 as input, then zoompan will reshape it, leading to it not keeping
+    // the right aspect ratio. To resolve this, we pad the image with white bars to get it to 9:16.
+    // If it's not tall enough, we'll pad y
+    if (originalWidth * 16 / 9 > originalHeight) {
+        command += "pad=w=iw:h=iw*16/9:x='0':y='(oh-ih)/2':color=white,";
+        // Take the scalar from the height comparison
+        zoomScalar = rawImage.width / rectangleWidth;
+        ffmpegOffsetY = (originalWidth * 16 / 9 - originalHeight) / 2;
+    } else {
+        // ...it's not wide enough, so we'll pad x.
+        command += "pad=w=ih*9/16:h=ih:x='(ow-iw)/2':y='0':color=white,";
+        // Take the scalar from the width comparison
+        zoomScalar = rawImage.height / rectangleHeight;
+        ffmpegOffsetX = (originalHeight * 9 / 16 - originalWidth) / 2;
+    }
+
     command += 'zoompan='; // start the zoompan
-    command += "z='4'"; // zoom expression TODO: change this
-    command += ":d=" + duration; // number of frames for total run
+    command += "d=" + duration; // number of frames for total run
     command += ":fps=" + fps;
     command += ":s=1080x1920"; // // 9:16 output image size
 
@@ -233,6 +254,7 @@ function createCommand() {
      *  )
      * )
      */
+    let zoomExpression = ":z='";
     let xExpression = ":x='";
     let yExpression = ":y='";
 
@@ -240,14 +262,16 @@ function createCommand() {
 
     // For each shot, we need to get its x/y.
     for (var i = 0; i < shots.length - 1; i++) {
-        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale;
-        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale;
+        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
+        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
+        const zoom1 = zoomScalar / parseFloat(shots[i].style.transform.slice(6, -1));
 
-        const x2 = parseInt(shots[i + 1].style.left.slice(0, -2)) * offsetScale;
-        const y2 = parseInt(shots[i + 1].style.top.slice(0, -2)) * offsetScale;
+        const x2 = parseInt(shots[i + 1].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
+        const y2 = parseInt(shots[i + 1].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
+        const zoom2 = zoomScalar / parseFloat(shots[i + 1].style.transform.slice(6, -1));
 
         if (i == shots.length - 2) {
-            xExpression += x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len + '';
+            xExpression += x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len;
         } else {
             xExpression += 'if('
             + 'lte(on, ' + len * (i + 1) + '),'
@@ -255,23 +279,33 @@ function createCommand() {
         }
 
         if (i == shots.length - 2) {
-            yExpression += y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / (' + len + ')';
+            yExpression += y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') /' + len;
         } else {
             yExpression += 'if('
             + 'lte(on, ' + len * (i + 1) + '),'
-            + y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / (' + len + '),';
+            + y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / ' + len + ',';
+        }
+
+        if (i == shots.length - 2) {
+            zoomExpression += zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len;
+        } else {
+            zoomExpression += 'if('
+            + 'lte(on, ' + len * (i + 1) + '),'
+            + zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len + ',';
         }
     }
     for (var i = 0; i < shots.length - 2; i++) {
         xExpression += ')';
         yExpression += ')';
+        zoomExpression += ')';
     }
     // command = command.substring(0, command.length - 1);
     command += xExpression + "'";
     command += yExpression + "'";
+    command += zoomExpression + "'";
 
 
-    command += ',scale=1080:1920" -t ' + durationSeconds + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
+    command += '" -t ' + durationSeconds + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
 
     return command;
     //     ffmpeg -loop 1 -i /Users/abeals/Downloads/Spencer_16.jpg \
