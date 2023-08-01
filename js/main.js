@@ -8,6 +8,10 @@ var scaleFactor = 0.001; // Adjust this value to control the zoom speed
 var offsetX = 0;
 var offsetY = 0;
 
+/* 9:16 aspect ratio, adjust width and height as needed */
+const rectangleWidth = 180;
+const rectangleHeight = 320;
+
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
@@ -42,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function uploadImage(file) {
 
-    const imageDisplay = document.getElementById('imageDisplay');
+    const rawImage = document.getElementById('rawImage');
 
     // Check if the dropped file is an image
     if (!file || !file.type.startsWith('image/')) {
@@ -55,27 +59,30 @@ function uploadImage(file) {
 
     // Set up the FileReader event when the image is loaded
     reader.onload = (e) => {
-        imageDisplay.onload = (e) => {
+        rawImage.onload = (e) => {
             // Scale the image and set the URL
-            const width = imageDisplay.width;
-            const height = imageDisplay.height;
+            const width = rawImage.width;
+            const height = rawImage.height;
             const tabHeight = window.innerHeight - 15;
             const tabWidth = window.innerWidth;
 
-            imageDisplay.style.display = "initial";
+            rawImage.width = tabHeight * width / height;
+            rawImage.height = tabHeight;
+            offsetX = (tabWidth - rawImage.width) / 2;
+            document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
 
-            imageDisplay.width = tabHeight * width / height;
-            imageDisplay.height = tabHeight;
+            // Make the container visible
+            document.getElementById('container').style.display = "initial";
 
+            // Set up the rectangle
             document.getElementById('rectangle').style.display = "initial";
+            document.getElementById('rectangle').style.width = rectangleWidth + 'px';
+            document.getElementById('rectangle').style.height = rectangleHeight + 'px';
 
-            offsetX = (tabWidth - imageDisplay.width)/2;
-
-            imageDisplay.style.transform = `translate(${offsetX}px, 0px)`;
-
+            // Set up all the additional listeners
             setupImageListeners();
         };
-        imageDisplay.src = e.target.result;
+        rawImage.src = e.target.result;
     };
 
     // Read the file as a data URL
@@ -88,12 +95,10 @@ function setupImageListeners() {
 
     document.addEventListener('mousemove', function (event) {
         var rectangle = document.getElementById('rectangle');
-        var offsetX = 90; // Half of the rectangle width
-        var offsetY = 160; // Half of the rectangle height
 
         // Calculate the new position of the rectangle based on the cursor position
-        var x = event.clientX - offsetX;
-        var y = event.clientY - offsetY;
+        var x = event.clientX - (rectangleWidth / 2);
+        var y = event.clientY - (rectangleHeight / 2);
 
         // Set the new position for the rectangle
         rectangle.style.left = x + 'px';
@@ -113,8 +118,6 @@ function setupImageListeners() {
             // Limit the scale to a reasonable range (e.g., between 0.5 and 2)
             newScale = Math.max(0.1, Math.min(newScale, 3));
 
-            console.log(newScale);
-
             // Update the current scale for the next wheel event
             currentScale = newScale;
         } else {
@@ -126,26 +129,21 @@ function setupImageListeners() {
                 offsetX -= (event.deltaX);
                 offsetY -= (event.deltaY);
             }
-            console.log(offsetX, offsetY);
         }
-        imageDisplay.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+        document.getElementById('image').style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
         // Keep the rectangles in the same place
-        for (i = 0; i < shots.length; i++) {
-            console.log('manipulating', shots[i]);
-            shots[i].style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
-        }
     });
 
     document.addEventListener('click', function (event) {
         // Add a little indicator of where you are
-        addRectangle();
+        addRectangle(event);
 
         // And take a screenshot of that section of the canvas
         // And add it to a floating UI of all of the shots
     });
 }
 
-function addRectangle() {
+function addRectangle(event) {
     const originalElement = document.getElementById('rectangle');
     const newRectangle = originalElement.cloneNode(true);
 
@@ -153,7 +151,27 @@ function addRectangle() {
     newRectangle.id = 'rectangle_' + shots.length;
 
     // Insert the cloned element into the document (e.g., append it to a container)
-    document.body.appendChild(newRectangle);
+    document.getElementById('image').appendChild(newRectangle);
+
+    const originalBounding = originalElement.getBoundingClientRect();
+    const imageBounding = document.getElementById('image').getBoundingClientRect();
+
+    const x = (originalBounding.left - imageBounding.left) / currentScale;
+    const y = (originalBounding.top - imageBounding.top) / currentScale;
+
+    // // Get the current mouse position, and use that to set left/top
+    // var rect = event.target.getBoundingClientRect();
+    // var x = event.clientX - rect.left - (rectangleWidth / currentScale / 2);
+    // var y = event.clientY - rect.top - (rectangleHeight / currentScale / 2);
+
+    // // Set the new position for the rectangle
+    // const img = document.getElementById('rawImage');
+
+    newRectangle.style.left = x + 'px';
+    newRectangle.style.top = y + 'px';
+    newRectangle.style.transform = `scale(${1/currentScale})`;
+    // newRectangle.style.width = rectangleWidth / currentScale;
+    // newRectangle.style.height = rectangleHeight / currentScale;
 
     shots.push(newRectangle);
 }

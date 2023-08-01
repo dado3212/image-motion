@@ -7,9 +7,6 @@ body {
 /* Rectangle */
 .rectangle {
     position: absolute;
-    width: 180px;
-    /* 9:16 aspect ratio, adjust width and height as needed */
-    height: 320px;
     border: 3px solid rgb(2, 155, 210);
     border-radius: 8px;
     /* This ensures the rectangle doesn't interfere with cursor movement */
@@ -27,14 +24,14 @@ body {
     margin: 0;
 }
 
-.container {
+#container {
     width: 100%;
     height: 100vh;
     overflow: hidden;
     position: relative;
 }
 
-#imageDisplay {
+#image {
     position: absolute;
     top: 0;
     left: 0;
