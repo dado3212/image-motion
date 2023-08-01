@@ -214,27 +214,64 @@ function createCommand() {
     command += ' -i ' + file_name; // input file from the upload (run in directory)
     command += ' -loglevel error'; // suppress everything but errors for now
     command += ' -filter_complex "'; // We are going to create a complex filter using zoompan
+    command += 'zoompan='; // start the zoompan
+    command += "z='4'"; // zoom expression TODO: change this
+    command += ":d=" + duration; // number of frames for total run
+    command += ":fps=" + fps;
+    command += ":s=1080x1920"; // // 9:16 output image size
+
+    /**
+     * Sample tweening function for four shots:
+     *
+     * if (
+     *  lte(on, ftl),
+     *  x1 + (x2-x1) * on / ftl,
+     *  if (
+     *    lte(on, ftl * 2),
+     *    x2 + (x3 - x2) * (on - ftl) / (ftl * 2),
+     *    x3 + (x4 - x3) * (on - ftl * 2) / (ftl * 3)
+     *  )
+     * )
+     */
+    let xExpression = ":x='";
+    let yExpression = ":y='";
+
+    const len = duration / (shots.length - 1);
 
     // For each shot, we need to get its x/y.
     for (var i = 0; i < shots.length - 1; i++) {
         const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale;
         const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale;
 
-        const x2 = parseInt(shots[i+1].style.left.slice(0, -2)) * offsetScale;
-        const y2 = parseInt(shots[i+1].style.top.slice(0, -2)) * offsetScale;
+        const x2 = parseInt(shots[i + 1].style.left.slice(0, -2)) * offsetScale;
+        const y2 = parseInt(shots[i + 1].style.top.slice(0, -2)) * offsetScale;
 
-        command += 'zoompan=' // start the zoompan
-            + "z='4'" // zoom expression
-            + ":d=" + duration // number of frames for the effect (defaults to 90)
-            + ":x='" + x1 + " + " + (x2 - x1) + " * on/" + duration + "'" // x expression (a = input width/input height)
-            + ":y='" + y1 + " + " + (y2 - y1) + " * on/" + duration + "'" // y expression
-            + ":fps=" + fps
-            + ":s=1080x1920" // 9:16 output image size
-            + ","; // comma to deliminate
+        if (i == shots.length - 2) {
+            xExpression += x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len + '';
+        } else {
+            xExpression += 'if('
+            + 'lte(on, ' + len * (i + 1) + '),'
+            + x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len + ',';
+        }
+
+        if (i == shots.length - 2) {
+            yExpression += y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / (' + len + ')';
+        } else {
+            yExpression += 'if('
+            + 'lte(on, ' + len * (i + 1) + '),'
+            + y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / (' + len + '),';
+        }
     }
-    command = command.substring(0, command.length - 1);
+    for (var i = 0; i < shots.length - 2; i++) {
+        xExpression += ')';
+        yExpression += ')';
+    }
+    // command = command.substring(0, command.length - 1);
+    command += xExpression + "'";
+    command += yExpression + "'";
 
-    command += ',scale=iw:ih" -t 10 -pix_fmt yuv420p -y output_video.mp4'; // suffix
+
+    command += ',scale=1080:1920" -t ' + durationSeconds + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
 
     return command;
     //     ffmpeg -loop 1 -i /Users/abeals/Downloads/Spencer_16.jpg \
