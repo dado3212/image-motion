@@ -23,20 +23,66 @@ function drop(evt) {
         const reader = new FileReader();
 
         // Set up the FileReader event when the image is loaded
-        reader.onload = async (e) => {
+        reader.onload = (e) => {
+            imageDisplay.onload = (e) => {
+                const width = imageDisplay.width;
+                const height = imageDisplay.height;
+                const tabHeight = window.innerHeight - 30;
+                console.log(width, height, tabHeight);
 
-            const tempImage = new Image();
+                imageDisplay.style.display = "initial";
 
-            tempImage.onload = () => {
-                // Get the dimensions of the dropped image
-                const width = tempImage.width;
-                const height = tempImage.height;
+                imageDisplay.width = tabHeight * width / height;
+                imageDisplay.height = tabHeight;
 
-                // Set the JPG data URL as the source of the image
-                imageDisplay.src = jpgDataURL;
+                document.getElementById('image').remove();
+
+                document.addEventListener('mousemove', function (event) {
+                    var rectangle = document.getElementById('rectangle');
+                    var offsetX = 90; // Half of the rectangle width
+                    var offsetY = 160; // Half of the rectangle height
+
+                    // Calculate the new position of the rectangle based on the cursor position
+                    var x = event.clientX - offsetX;
+                    var y = event.clientY - offsetY;
+
+                    // Set the new position for the rectangle
+                    rectangle.style.left = x + 'px';
+                    rectangle.style.top = y + 'px';
+                });
+
+                var currentScale = 1;
+                var scaleFactor = 0.001; // Adjust this value to control the zoom speed
+
+                // Detect the wheel event (including the trackpad pinch gesture)
+                window.addEventListener('wheel', function(event) {
+                    // event.preventDefault();
+
+                    // Calculate the new scale based on the wheel event
+                    var wheelDelta = event.deltaY;
+
+                    // Zoom mode
+                    if (event.ctrlKey) {
+                        var newScale = currentScale + (wheelDelta * scaleFactor);
+
+                        // Limit the scale to a reasonable range (e.g., between 0.5 and 2)
+                        newScale = Math.max(0.1, Math.min(newScale, 3));
+
+                        console.log(newScale);
+
+                        // Apply the new scale transformation to the image
+                        imageDisplay.style.transform = `scale(${newScale})`;
+
+                        // Update the current scale for the next wheel event
+                        currentScale = newScale;
+                    } else {
+                        // Pan mode
+
+                    }
+
+                });
             };
-
-            tempImage.src = e.target.result;
+            imageDisplay.src = e.target.result;
         };
 
         reader.onprogress = (event) => {
