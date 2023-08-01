@@ -2,6 +2,12 @@
 // Global context
 var shots = [];
 
+var currentScale = 1;
+var scaleFactor = 0.001; // Adjust this value to control the zoom speed
+
+var offsetX = 0;
+var offsetY = 0;
+
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
@@ -53,8 +59,8 @@ function uploadImage(file) {
             // Scale the image and set the URL
             const width = imageDisplay.width;
             const height = imageDisplay.height;
-            const tabHeight = window.innerHeight - 30;
-            console.log(width, height, tabHeight);
+            const tabHeight = window.innerHeight - 15;
+            const tabWidth = window.innerWidth;
 
             imageDisplay.style.display = "initial";
 
@@ -62,6 +68,10 @@ function uploadImage(file) {
             imageDisplay.height = tabHeight;
 
             document.getElementById('rectangle').style.display = "initial";
+
+            offsetX = (tabWidth - imageDisplay.width)/2;
+
+            imageDisplay.style.transform = `translate(${offsetX}px, 0px)`;
 
             setupImageListeners();
         };
@@ -76,12 +86,6 @@ function uploadImage(file) {
 function setupImageListeners() {
     const naturalScroll = isNaturalScrolling();
 
-    var currentScale = 1;
-    var scaleFactor = 0.001; // Adjust this value to control the zoom speed
-
-    var offsetX = 0;
-    var offsetY = 0;
-
     document.addEventListener('mousemove', function (event) {
         var rectangle = document.getElementById('rectangle');
         var offsetX = 90; // Half of the rectangle width
@@ -94,6 +98,8 @@ function setupImageListeners() {
         // Set the new position for the rectangle
         rectangle.style.left = x + 'px';
         rectangle.style.top = y + 'px';
+
+        // TODO: Set the scale point for the image
     });
 
     // Detect the wheel event (including the trackpad pinch gesture)
