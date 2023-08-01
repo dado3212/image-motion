@@ -1,33 +1,11 @@
-/* For the image drop */
-#image {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    overflow: hidden;
-
-    display: inline-block;
-
-    background-size: cover;
-    background-position: center;
-}
-
-#image.blank {
-    background-color: white;
-    border: 5px dashed rgba(0, 0, 0, 0.2);
-}
-
-#image.blank:after {
-    content: "+";
-    color: rgba(0, 0, 0, 0.2);
-    display: inline-block;
-    font-size: 1em;
-    line-height: 50px;
-    text-align: center;
-    width: 100%;
+/* Prevent scroll back */
+html,
+body {
+    overscroll-behavior-x: none;
 }
 
 /* Rectangle */
-#rectangle {
+.rectangle {
     position: absolute;
     width: 180px;
     /* 9:16 aspect ratio, adjust width and height as needed */
@@ -41,6 +19,8 @@
     top: 0px;
 
     z-index: 2;
+
+    transform-origin: 0 0;
 }
 
 body {

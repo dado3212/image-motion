@@ -1,3 +1,7 @@
+
+// Global context
+var shots = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
@@ -119,7 +123,33 @@ function setupImageListeners() {
             console.log(offsetX, offsetY);
         }
         imageDisplay.style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+        // Keep the rectangles in the same place
+        for (i = 0; i < shots.length; i++) {
+            console.log('manipulating', shots[i]);
+            shots[i].style.transform = `scale(${currentScale}) translate(${offsetX}px, ${offsetY}px)`;
+        }
     });
+
+    document.addEventListener('click', function (event) {
+        // Add a little indicator of where you are
+        addRectangle();
+
+        // And take a screenshot of that section of the canvas
+        // And add it to a floating UI of all of the shots
+    });
+}
+
+function addRectangle() {
+    const originalElement = document.getElementById('rectangle');
+    const newRectangle = originalElement.cloneNode(true);
+
+    // Optionally, you can modify the cloned element's attributes or content
+    newRectangle.id = 'rectangle_' + shots.length;
+
+    // Insert the cloned element into the document (e.g., append it to a container)
+    document.body.appendChild(newRectangle);
+
+    shots.push(newRectangle);
 }
 
 function isNaturalScrolling() {
