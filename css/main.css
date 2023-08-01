@@ -1,9 +1,3 @@
-/* Prevent scroll back */
-html,
-body {
-    overscroll-behavior-x: none;
-}
-
 /* Rectangle */
 .rectangle {
     position: absolute;
@@ -46,6 +40,8 @@ body {
     height: 100vh;
     overflow: hidden;
     position: relative;
+
+    overscroll-behavior-x: none;
 }
 
 #image {
@@ -63,4 +59,24 @@ body {
     right: 0px;
     top: 0px;
     background-color: #e8d8cb;
+}
+
+.snapshot {
+    height: 130px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #00000047;
+    margin: 5px;
+
+    overflow-y: scroll;
+}
+
+.snapshot span {
+    font-size: 3em;
+    padding: 10px;
+    font-family: sans-serif;
+}
+
+.snapshot img {
+    height: 130px;
 }

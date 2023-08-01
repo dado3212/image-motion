@@ -119,7 +119,7 @@ function setupImageListeners() {
     });
 
     // Detect the wheel event (including the trackpad pinch gesture)
-    window.addEventListener('wheel', function (e) {
+    document.getElementById('container').addEventListener('wheel', function (e) {
         e.preventDefault();
 
         // Zoom mode
@@ -143,16 +143,16 @@ function setupImageListeners() {
         }
         document.getElementById('image').style.transform = `translate3D(${posX}px, ${posY}px, 0px) scale(${scale})`;
         // Keep the rectangles in the same place
-    }, {passive: false});
+    }, { passive: false });
 
-    window.addEventListener("gesturestart", function (e) {
+    document.getElementById('container').addEventListener("gesturestart", function (e) {
         e.preventDefault();
         startX = e.pageX - posX;
         startY = e.pageY - posY;
         gestureStartScale = scale;
-      });
+    });
 
-      window.addEventListener("gesturechange", function (e) {
+    document.getElementById('container').addEventListener("gesturechange", function (e) {
         e.preventDefault();
 
         scale = gestureStartScale * e.scale;
@@ -161,19 +161,19 @@ function setupImageListeners() {
         posY = e.pageY - startY;
 
         document.getElementById('image').style.transform = `translate3D(${posX}px, ${posY}px, 0px) scale(${scale})`;
-      });
+    });
 
-      window.addEventListener("gestureend", function (e) {
+    document.getElementById('container').addEventListener("gestureend", function (e) {
         e.preventDefault();
-      });
+    });
 
 
-    document.addEventListener('click', function (event) {
+    document.getElementById('container').addEventListener('click', function (event) {
         // Add a little indicator of where you are
         addRectangle(event);
 
         // And take a screenshot of that section of the canvas
-
+        addScreenshot(event);
 
         // And add it to a floating UI of all of the shots
     });
@@ -206,6 +206,49 @@ function addRectangle(event) {
     shots.push(newRectangle);
 
     console.log(createCommand());
+}
+
+function addScreenshot(event) {
+    // Get the last element that was added, and the x, y
+    const newestRectangle = shots[shots.length - 1].getBoundingClientRect();
+    const rawImage = document.getElementById('rawImage');
+    const imageBounding = rawImage.getBoundingClientRect();
+
+    // Create a canvas dynamically
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set the canvas dimensions
+    canvas.width = rectangleWidth;
+    canvas.height = rectangleHeight;
+
+    ctx.drawImage(
+        rawImage,
+        // Source
+        parseInt(shots[shots.length - 1].style.left.slice(0, -2)) / imageBounding.width * scale * originalWidth,
+        parseInt(shots[shots.length - 1].style.top.slice(0, -2)) / imageBounding.height * scale * originalHeight,
+        newestRectangle.width / imageBounding.width * originalWidth,
+        newestRectangle.height / imageBounding.height * originalHeight,
+        // Destination
+        0,
+        0,
+        rectangleWidth,
+        rectangleHeight
+    );
+
+    // Convert the canvas to an image
+    const image = new Image();
+    image.src = canvas.toDataURL();
+
+    const newDiv = document.createElement('div');
+    newDiv.classList.add('snapshot');
+
+    const newSpan = document.createElement('span');
+    newSpan.innerHTML = shots.length;
+
+    newDiv.appendChild(newSpan);
+    newDiv.appendChild(image);
+    document.getElementById('sidebar').appendChild(newDiv);
 }
 
 function isNaturalScrolling() {
@@ -304,24 +347,24 @@ function createCommand() {
             xExpression += x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len;
         } else {
             xExpression += 'if('
-            + 'lte(on, ' + len * (i + 1) + '),'
-            + x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len + ',';
+                + 'lte(on, ' + len * (i + 1) + '),'
+                + x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len + ',';
         }
 
         if (i == shots.length - 2) {
             yExpression += y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') /' + len;
         } else {
             yExpression += 'if('
-            + 'lte(on, ' + len * (i + 1) + '),'
-            + y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / ' + len + ',';
+                + 'lte(on, ' + len * (i + 1) + '),'
+                + y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / ' + len + ',';
         }
 
         if (i == shots.length - 2) {
             zoomExpression += zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len;
         } else {
             zoomExpression += 'if('
-            + 'lte(on, ' + len * (i + 1) + '),'
-            + zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len + ',';
+                + 'lte(on, ' + len * (i + 1) + '),'
+                + zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len + ',';
         }
     }
     for (var i = 0; i < shots.length - 2; i++) {
