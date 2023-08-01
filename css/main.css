@@ -62,5 +62,5 @@ body {
     height: 100%; */
     transform-origin: 0 0;
 
-    transition = 'transform 0.1s ease-in-out';
+    transition: 'transform 0.3s ease-in-out';
 }
