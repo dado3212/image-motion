@@ -23,6 +23,10 @@ let file_name = '';
 
 var canvas, ctx;
 
+// For output
+const DURATION_SECONDS = 10;
+const FPS = 30;
+
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
@@ -279,11 +283,6 @@ function createCommand() {
         return '';
     }
 
-    const durationSeconds = 10; // number of seconds
-    const fps = 30; // fps
-
-    const duration = durationSeconds * fps;
-
     const rawImage = document.getElementById('rawImage');
     const offsetScale = originalWidth / rawImage.width;
 
@@ -316,8 +315,8 @@ function createCommand() {
     }
 
     command += 'zoompan='; // start the zoompan
-    command += "d=" + duration; // number of frames for total run
-    command += ":fps=" + fps;
+    command += "d=" + (DURATION_SECONDS * FPS); // number of frames for total run
+    command += ":fps=" + FPS;
     command += ":s=1080x1920"; // // 9:16 output image size
 
     /**
@@ -337,8 +336,6 @@ function createCommand() {
     let xExpression = ":x='";
     let yExpression = ":y='";
 
-    const len = duration / (shots.length - 1);
-
     // For each shot, we need to get its x/y.
     for (var i = 0; i < shots.length - 1; i++) {
         const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
@@ -349,29 +346,9 @@ function createCommand() {
         const y2 = parseInt(shots[i + 1].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
         const zoom2 = zoomScalar / parseFloat(shots[i + 1].style.transform.slice(6, -1));
 
-        if (i == shots.length - 2) {
-            xExpression += x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len;
-        } else {
-            xExpression += 'if('
-                + 'lte(on, ' + len * (i + 1) + '),'
-                + x1 + ' + ' + (x2 - x1) + ' * (on - ' + len * i + ') / ' + len + ',';
-        }
-
-        if (i == shots.length - 2) {
-            yExpression += y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') /' + len;
-        } else {
-            yExpression += 'if('
-                + 'lte(on, ' + len * (i + 1) + '),'
-                + y1 + ' + ' + (y2 - y1) + ' * (on - ' + len * i + ') / ' + len + ',';
-        }
-
-        if (i == shots.length - 2) {
-            zoomExpression += zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len;
-        } else {
-            zoomExpression += 'if('
-                + 'lte(on, ' + len * (i + 1) + '),'
-                + zoom1 + ' + ' + (zoom2 - zoom1) + ' * (on - ' + len * i + ') / ' + len + ',';
-        }
+        xExpression = linear(xExpression, x1, x2, i);
+        yExpression = linear(yExpression, y1, y2, i);
+        zoomExpression = linear(zoomExpression, zoom1, zoom2, i);
     }
     for (var i = 0; i < shots.length - 2; i++) {
         xExpression += ')';
@@ -383,10 +360,22 @@ function createCommand() {
     command += yExpression + "'";
     command += zoomExpression + "'";
 
-
-    command += '" -t ' + durationSeconds + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
+    command += '" -t ' + DURATION_SECONDS + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
 
     return command;
+}
+
+function linear(expression, p1, p2, i) {
+    const len = (DURATION_SECONDS * FPS) / (shots.length - 1);
+
+    if (i == shots.length - 2) {
+        expression += `${p1} + ${p2 - p1} * (on - ${len * i}) / ${len}`;
+    } else {
+        expression += 'if('
+            + 'lte(on, ' + len * (i + 1) + '),'
+            + p1 + ' + ' + (p2 - p1) + ' * (on - ' + len * i + ') / ' + len + ',';
+    }
+    return expression;
 }
 
 function clearFrames() {
