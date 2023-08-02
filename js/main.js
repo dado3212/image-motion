@@ -31,7 +31,7 @@ class Point {
 }
 
 // For output
-const DURATION_SECONDS = 10;
+let DURATION_SECONDS = 10;
 const FPS = 30;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -296,6 +296,8 @@ function createCommand() {
     if (shots.length <= 1) {
         return '';
     }
+
+    DURATION_SECONDS = parseInt(document.getElementById('duration').value);
 
     const rawImage = document.getElementById('rawImage');
     const offsetScale = originalWidth / rawImage.width;
