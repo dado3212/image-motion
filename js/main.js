@@ -277,6 +277,13 @@ function isNaturalScrolling() {
     return answer;
 }
 
+function createClick(event) {
+    event.stopPropagation();
+    const command = createCommand();
+    console.log(command);
+    alert(command);
+}
+
 function createCommand() {
     // Can't animate a single keyframe, just crop the image dumbass.
     if (shots.length <= 1) {
@@ -336,23 +343,68 @@ function createCommand() {
     let xExpression = ":x='";
     let yExpression = ":y='";
 
-    // For each shot, we need to get its x/y.
-    for (var i = 0; i < shots.length - 1; i++) {
+    // Extract positions
+    pts = [];
+
+    for (var i = 0; i < shots.length; i++) {
         const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
         const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
-        const zoom1 = zoomScalar / parseFloat(shots[i].style.transform.slice(6, -1));
+        pts.push(x1);
+        pts.push(y1);
+    }
 
-        const x2 = parseInt(shots[i + 1].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
-        const y2 = parseInt(shots[i + 1].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
+    cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
+    for (var i = 0; i < pts.length - 2; i += 1) {
+        cps = cps.concat(ctlpts(pts[2 * i], pts[2 * i + 1],
+            pts[2 * i + 2], pts[2 * i + 3],
+            pts[2 * i + 4], pts[2 * i + 5]));
+    }
+
+    if (shots.length == 2) {
+        xExpression = linear(xExpression, 0, pts[0], pts[2]);
+        yExpression = linear(yExpression, 0, pts[1], pts[3]);
+    } else {
+        // From point 0 to point 1 is a quadratic bezier
+        xExpression = quadraticBezier(xExpression, 0, pts[0], cps[0], pts[2]);
+        yExpression = quadraticBezier(yExpression, 0, pts[1], cps[1], pts[3]);
+        // For all middle points, it's cubic beziers
+        for (var i = 2; i < shots.length - 1; i += 1) {
+            xExpression = cubicBezier(
+                xExpression,
+                i - 1,
+                pts[(i-1) * 2],
+                cps[(2 * (i - 1) - 1) * 2],
+                cps[(2 * (i - 1)) * 2],
+                pts[i * 2],
+            );
+            yExpression = cubicBezier(
+                yExpression,
+                i - 1,
+                pts[(i-1) * 2 + 1],
+                cps[(2 * (i - 1) - 1) * 2 + 1],
+                cps[(2 * (i - 1)) * 2 + 1],
+                pts[i * 2 + 1],
+            );
+        }
+        // And the final one is a quadratic bezier (unless you're looping, TODO)
+        i = shots.length - 1;
+        xExpression = quadraticBezier(xExpression, i - 1, pts[(i-1) * 2], cps[(2 * (i - 1) - 1) * 2], pts[i * 2]);
+        yExpression = quadraticBezier(yExpression, i - 1, pts[(i-1) * 2 + 1], cps[(2 * (i - 1) - 1) * 2 + 1], pts[i*2 + 1]);
+
+        for (var i = 0; i < shots.length - 2; i++) {
+            xExpression += ')';
+            yExpression += ')';
+        }
+    }
+
+    // Handle the zoom linearly
+    for (var i = 0; i < shots.length - 1; i++) {
+        const zoom1 = zoomScalar / parseFloat(shots[i].style.transform.slice(6, -1));
         const zoom2 = zoomScalar / parseFloat(shots[i + 1].style.transform.slice(6, -1));
 
-        xExpression = linear(xExpression, x1, x2, i);
-        yExpression = linear(yExpression, y1, y2, i);
-        zoomExpression = linear(zoomExpression, zoom1, zoom2, i);
+        zoomExpression = linear(zoomExpression, i, zoom1, zoom2);
     }
     for (var i = 0; i < shots.length - 2; i++) {
-        xExpression += ')';
-        yExpression += ')';
         zoomExpression += ')';
     }
 
@@ -365,7 +417,7 @@ function createCommand() {
     return command;
 }
 
-function linear(expression, p1, p2, i) {
+function linear(expression, i, p1, p2) {
     const len = (DURATION_SECONDS * FPS) / (shots.length - 1);
 
     const t = `(on - ${len * i}) / ${len}`;
@@ -382,10 +434,10 @@ function linear(expression, p1, p2, i) {
     return expression;
 }
 
-function quadraticBezier(expression, p1, c1, p2, i) {
+function quadraticBezier(expression, i, p1, c1, p2) {
     const len = (DURATION_SECONDS * FPS) / (shots.length - 1);
 
-    const t = `(on - ${len * i}) / ${len}`;
+    const t = `((on - ${len * i}) / ${len})`;
 
     const quadraticBezierFunction = `(1 - ${t})^2 * ${p1} + 2 * (1 - ${t}) * ${t} * ${c1} + ${t}^2 * ${p2}`;
 
@@ -395,6 +447,23 @@ function quadraticBezier(expression, p1, c1, p2, i) {
         expression += 'if('
             + 'lte(on, ' + len * (i + 1) + '),'
             + quadraticBezierFunction + ',';
+    }
+    return expression;
+}
+
+function cubicBezier(expression, i, p1, c1, c2, p2) {
+    const len = (DURATION_SECONDS * FPS) / (shots.length - 1);
+
+    const t = `((on - ${len * i}) / ${len})`;
+
+    const cubicBezierFunction = `(1 - ${t})^3 * ${p1} + 3 * (1 - ${t})^2 * ${t} * ${c1} + 3 * (1 - ${t}) * ${t}^2 * ${c2} + ${t}^3 * ${p2}`;
+
+    if (i == shots.length - 2) {
+        expression += cubicBezierFunction;
+    } else {
+        expression += 'if('
+            + 'lte(on, ' + len * (i + 1) + '),'
+            + cubicBezierFunction + ',';
     }
     return expression;
 }
@@ -430,7 +499,7 @@ function va(arr, i, j) {
 }
 
 function ctlpts(x1, y1, x2, y2, x3, y3) {
-    var t = 0.5;
+    var t = 0.5; // tension
     var v = va(arguments, 0, 2);
     var d01 = dista(arguments, 0, 1);
     var d12 = dista(arguments, 1, 2);

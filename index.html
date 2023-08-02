@@ -19,8 +19,8 @@
             <div id="sidebar">
                 <div>
                     <button onclick="event.stopPropagation(); clearFrames();">Reset All</button>
-                    <button onclick="event.stopPropagation(); alert(createCommand());">Create</button>
-                    <input type="checkbox" id="loop" checked>
+                    <button onclick="createClick(event);">Create</button>
+                    <input type="checkbox" id="loop">
                     <label for="loop" style="user-select: none;">Loop</label><br>
                 </div>
                 <div id="frames"></div>
