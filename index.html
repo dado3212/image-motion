@@ -16,7 +16,13 @@
                 </div>
             </div>
             <div id="sidebar">
-                <button onclick="event.stopPropagation(); clearFrames()">Reset All</button>
+                <div>
+                    <button onclick="event.stopPropagation(); clearFrames();">Reset All</button>
+                    <button onclick="event.stopPropagation(); alert(createCommand());">Create</button>
+                </div>
+                <div id="frames">
+
+                </div>
             </div>
         </div>
     </body>

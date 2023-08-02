@@ -104,7 +104,7 @@ function uploadImage(file) {
 function setupImageListeners() {
     const naturalScroll = isNaturalScrolling();
 
-    document.addEventListener('mousemove', function (event) {
+    document.getElementById('container').addEventListener('mousemove', function (event) {
         var rectangle = document.getElementById('rectangle');
 
         // Calculate the new position of the rectangle based on the cursor position
@@ -204,8 +204,6 @@ function addRectangle(event) {
     newRectangle.appendChild(span);
 
     shots.push(newRectangle);
-
-    console.log(createCommand());
 }
 
 function addScreenshot(event) {
@@ -248,7 +246,7 @@ function addScreenshot(event) {
 
     newDiv.appendChild(newSpan);
     newDiv.appendChild(image);
-    document.getElementById('sidebar').appendChild(newDiv);
+    document.getElementById('frames').appendChild(newDiv);
 }
 
 function isNaturalScrolling() {
@@ -388,4 +386,8 @@ function clearFrames() {
         shots[i].remove();
     }
     shots = [];
+    var toRemove = document.querySelectorAll('.snapshot');
+    for (var i = 0; i < toRemove.length; i++) {
+        toRemove[i].remove();
+    }
 }
