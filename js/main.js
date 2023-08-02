@@ -21,6 +21,8 @@ let originalHeight = 0;
 
 let file_name = '';
 
+var canvas, ctx;
+
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
@@ -81,6 +83,12 @@ function uploadImage(file) {
 
             minScale = Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
             maxScale = 10 * Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
+
+            // Set up the canvas
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext("2d");
+            canvas.width = rawImage.width;
+            canvas.height = rawImage.height;
 
             offsetX = (tabWidth - 350 - rawImage.width) / 2;
             document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
@@ -175,7 +183,7 @@ function setupImageListeners() {
         // And take a screenshot of that section of the canvas
         addScreenshot(event);
 
-        // And add it to a floating UI of all of the shots
+        drawSplines();
     });
 }
 
@@ -389,5 +397,100 @@ function clearFrames() {
     var toRemove = document.querySelectorAll('.snapshot');
     for (var i = 0; i < toRemove.length; i++) {
         toRemove[i].remove();
+    }
+
+    // Clear the splines
+    clear();
+}
+
+/**
+ * Copied directly from https://stackoverflow.com/a/20309900/3951475
+ */
+function clear() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function dista(arr, i, j) {
+    return Math.sqrt(Math.pow(arr[2 * i] - arr[2 * j], 2) + Math.pow(arr[2 * i + 1] - arr[2 * j + 1], 2));
+}
+
+// return vector from i to j where i and j are indexes pointing into an array of points.
+function va(arr, i, j) {
+    return [arr[2 * j] - arr[2 * i], arr[2 * j + 1] - arr[2 * i + 1]]
+}
+
+function ctlpts(x1, y1, x2, y2, x3, y3) {
+    var t = 0.5;
+    var v = va(arguments, 0, 2);
+    var d01 = dista(arguments, 0, 1);
+    var d12 = dista(arguments, 1, 2);
+    var d012 = d01 + d12;
+    return [x2 - v[0] * t * d01 / d012, y2 - v[1] * t * d01 / d012,
+    x2 + v[0] * t * d12 / d012, y2 + v[1] * t * d12 / d012];
+}
+
+let pts = [];
+
+function addPts(pts, i) {
+    // Adjust the points to the center
+    const x = parseInt(shots[i].style.left.slice(0, -2)) + rectangleWidth * parseFloat(shots[i].style.transform.slice(6, -1)) / 2;
+    const y = parseInt(shots[i].style.top.slice(0, -2)) + rectangleHeight * parseFloat(shots[i].style.transform.slice(6, -1)) / 2;
+    pts.push(x);
+    pts.push(y);
+    return pts;
+}
+
+function drawSplines() {
+    clear();
+    pts = [];
+
+    for (var i = 0; i < shots.length; i++) {
+        pts = addPts(pts, i);
+    }
+
+    if (document.getElementById('loop').checked && shots.length > 2) {
+        pts = addPts(pts, 0);
+        // pts = addPts(pts, 1);
+    }
+
+    cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
+    for (var i = 0; i < pts.length - 2; i += 1) {
+        cps = cps.concat(ctlpts(pts[2 * i], pts[2 * i + 1],
+            pts[2 * i + 2], pts[2 * i + 3],
+            pts[2 * i + 4], pts[2 * i + 5]));
+    }
+
+    drawCurvedPath(cps, pts);
+}
+
+function drawCurvedPath(cps, pts) {
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#029bd2';
+
+    var len = pts.length / 2; // number of points
+    if (len < 2) return;
+    if (len == 2) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0], pts[1]);
+        ctx.lineTo(pts[2], pts[3]);
+        ctx.stroke();
+    }
+    else {
+        ctx.beginPath();
+        ctx.moveTo(pts[0], pts[1]);
+        // from point 0 to point 1 is a quadratic
+        ctx.quadraticCurveTo(cps[0], cps[1], pts[2], pts[3]);
+        // for all middle points, connect with bezier
+        for (var i = 2; i < len - 1; i += 1) {
+            // console.log("to", pts[2*i], pts[2*i+1]);
+            ctx.bezierCurveTo(
+                cps[(2 * (i - 1) - 1) * 2], cps[(2 * (i - 1) - 1) * 2 + 1],
+                cps[(2 * (i - 1)) * 2], cps[(2 * (i - 1)) * 2 + 1],
+                pts[i * 2], pts[i * 2 + 1]);
+        }
+        ctx.quadraticCurveTo(
+            cps[(2 * (i - 1) - 1) * 2], cps[(2 * (i - 1) - 1) * 2 + 1],
+            pts[i * 2], pts[i * 2 + 1]);
+        ctx.stroke();
     }
 }

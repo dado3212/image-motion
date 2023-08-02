@@ -87,3 +87,9 @@ body {
 .snapshot img {
     height: 130px;
 }
+
+#canvas {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}

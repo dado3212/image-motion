@@ -12,6 +12,7 @@
         <div>
             <div id="container">
                 <div id="image">
+                    <canvas id="canvas"></canvas>
                     <img id="rawImage">
                 </div>
             </div>
@@ -19,10 +20,10 @@
                 <div>
                     <button onclick="event.stopPropagation(); clearFrames();">Reset All</button>
                     <button onclick="event.stopPropagation(); alert(createCommand());">Create</button>
+                    <input type="checkbox" id="loop" checked>
+                    <label for="loop" style="user-select: none;">Loop</label><br>
                 </div>
-                <div id="frames">
-
-                </div>
+                <div id="frames"></div>
             </div>
         </div>
     </body>
