@@ -23,6 +23,13 @@ let file_name = '';
 
 var canvas, ctx;
 
+class Point {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+    }
+}
+
 // For output
 const DURATION_SECONDS = 10;
 const FPS = 30;
@@ -349,47 +356,50 @@ function createCommand() {
     for (var i = 0; i < shots.length; i++) {
         const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
         const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
-        pts.push(x1);
-        pts.push(y1);
+        pts.push(new Point(x1, y1));
     }
 
     cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
     for (var i = 0; i < pts.length - 2; i += 1) {
-        cps = cps.concat(ctlpts(pts[2 * i], pts[2 * i + 1],
-            pts[2 * i + 2], pts[2 * i + 3],
-            pts[2 * i + 4], pts[2 * i + 5]));
+        cps = cps.concat(
+            ctlpts(
+                pts[i],
+                pts[i + 1],
+                pts[i + 2],
+            )
+        );
     }
 
     if (shots.length == 2) {
-        xExpression = linear(xExpression, 0, pts[0], pts[2]);
-        yExpression = linear(yExpression, 0, pts[1], pts[3]);
+        xExpression = linear(xExpression, 0, pts[0].x, pts[1].x);
+        yExpression = linear(yExpression, 0, pts[1].x, pts[1].y);
     } else {
         // From point 0 to point 1 is a quadratic bezier
-        xExpression = quadraticBezier(xExpression, 0, pts[0], cps[0], pts[2]);
-        yExpression = quadraticBezier(yExpression, 0, pts[1], cps[1], pts[3]);
+        xExpression = quadraticBezier(xExpression, 0, pts[0].x, cps[0].x, pts[1].x);
+        yExpression = quadraticBezier(yExpression, 0, pts[0].y, cps[0].y, pts[1].y);
         // For all middle points, it's cubic beziers
         for (var i = 2; i < shots.length - 1; i += 1) {
             xExpression = cubicBezier(
                 xExpression,
                 i - 1,
-                pts[(i-1) * 2],
-                cps[(2 * (i - 1) - 1) * 2],
-                cps[(2 * (i - 1)) * 2],
-                pts[i * 2],
+                pts[i-1].x,
+                cps[(2 * (i - 1) - 1)].x,
+                cps[(2 * (i - 1))].x,
+                pts[i].x,
             );
             yExpression = cubicBezier(
                 yExpression,
                 i - 1,
-                pts[(i-1) * 2 + 1],
-                cps[(2 * (i - 1) - 1) * 2 + 1],
-                cps[(2 * (i - 1)) * 2 + 1],
-                pts[i * 2 + 1],
+                pts[i-1].y,
+                cps[2 * (i - 1) - 1].y,
+                cps[2 * (i - 1)].y,
+                pts[i].y,
             );
         }
         // And the final one is a quadratic bezier (unless you're looping, TODO)
         i = shots.length - 1;
-        xExpression = quadraticBezier(xExpression, i - 1, pts[(i-1) * 2], cps[(2 * (i - 1) - 1) * 2], pts[i * 2]);
-        yExpression = quadraticBezier(yExpression, i - 1, pts[(i-1) * 2 + 1], cps[(2 * (i - 1) - 1) * 2 + 1], pts[i*2 + 1]);
+        xExpression = quadraticBezier(xExpression, i - 1, pts[i-1].x, cps[(2 * (i - 1) - 1)].x, pts[i].x);
+        yExpression = quadraticBezier(yExpression, i - 1, pts[i-1].y, cps[(2 * (i - 1) - 1)].y, pts[i].y);
 
         for (var i = 0; i < shots.length - 2; i++) {
             xExpression += ')';
@@ -489,23 +499,21 @@ function clear() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function dista(arr, i, j) {
-    return Math.sqrt(Math.pow(arr[2 * i] - arr[2 * j], 2) + Math.pow(arr[2 * i + 1] - arr[2 * j + 1], 2));
+function dista(p_i, p_j) {
+    return Math.sqrt(Math.pow(p_i.x - p_j.x, 2) + Math.pow(p_i.y - p_j.y, 2));
 }
 
-// return vector from i to j where i and j are indexes pointing into an array of points.
-function va(arr, i, j) {
-    return [arr[2 * j] - arr[2 * i], arr[2 * j + 1] - arr[2 * i + 1]]
-}
-
-function ctlpts(x1, y1, x2, y2, x3, y3) {
+function ctlpts(one, two, three) {
+    console.log(one, two, three);
     var t = 0.5; // tension
-    var v = va(arguments, 0, 2);
-    var d01 = dista(arguments, 0, 1);
-    var d12 = dista(arguments, 1, 2);
+    var v = new Point(three.x - one.x, three.y - one.y);
+    var d01 = dista(one, two);
+    var d12 = dista(two, three);
     var d012 = d01 + d12;
-    return [x2 - v[0] * t * d01 / d012, y2 - v[1] * t * d01 / d012,
-    x2 + v[0] * t * d12 / d012, y2 + v[1] * t * d12 / d012];
+    return [
+        new Point(two.x - v.x * t * d01 / d012, two.y- v.y * t * d01 / d012),
+        new Point(two.x + v.x * t * d12 / d012, two.y + v.y * t * d12 / d012)
+    ];
 }
 
 let pts = [];
@@ -514,8 +522,7 @@ function addPts(pts, i) {
     // Adjust the points to the center
     const x = parseInt(shots[i].style.left.slice(0, -2)) + rectangleWidth * parseFloat(shots[i].style.transform.slice(6, -1)) / 2;
     const y = parseInt(shots[i].style.top.slice(0, -2)) + rectangleHeight * parseFloat(shots[i].style.transform.slice(6, -1)) / 2;
-    pts.push(x);
-    pts.push(y);
+    pts.push(new Point(x, y));
     return pts;
 }
 
@@ -534,9 +541,13 @@ function drawSplines() {
 
     cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
     for (var i = 0; i < pts.length - 2; i += 1) {
-        cps = cps.concat(ctlpts(pts[2 * i], pts[2 * i + 1],
-            pts[2 * i + 2], pts[2 * i + 3],
-            pts[2 * i + 4], pts[2 * i + 5]));
+        cps = cps.concat(
+            ctlpts(
+                pts[i],
+                pts[i+1],
+                pts[i+2],
+            )
+        );
     }
 
     drawCurvedPath(cps, pts);
@@ -546,30 +557,28 @@ function drawCurvedPath(cps, pts) {
     ctx.lineWidth = 8;
     ctx.strokeStyle = '#029bd2';
 
-    var len = pts.length / 2; // number of points
-    if (len < 2) return;
-    if (len == 2) {
+    if (pts.length < 2) return;
+    if (pts.length == 2) {
         ctx.beginPath();
-        ctx.moveTo(pts[0], pts[1]);
-        ctx.lineTo(pts[2], pts[3]);
+        ctx.moveTo(pts[0].x, pts[0].y);
+        ctx.lineTo(pts[1].x, pts[1].y);
         ctx.stroke();
     }
     else {
         ctx.beginPath();
-        ctx.moveTo(pts[0], pts[1]);
+        ctx.moveTo(pts[0].x, pts[0].y);
         // from point 0 to point 1 is a quadratic
-        ctx.quadraticCurveTo(cps[0], cps[1], pts[2], pts[3]);
+        ctx.quadraticCurveTo(cps[0].x, cps[0].y, pts[1].x, pts[1].y);
         // for all middle points, connect with bezier
-        for (var i = 2; i < len - 1; i += 1) {
-            // console.log("to", pts[2*i], pts[2*i+1]);
+        for (var i = 2; i < pts.length - 1; i += 1) {
             ctx.bezierCurveTo(
-                cps[(2 * (i - 1) - 1) * 2], cps[(2 * (i - 1) - 1) * 2 + 1],
-                cps[(2 * (i - 1)) * 2], cps[(2 * (i - 1)) * 2 + 1],
-                pts[i * 2], pts[i * 2 + 1]);
+                cps[(2 * (i - 1) - 1)].x, cps[(2 * (i - 1) - 1)].y,
+                cps[2 * (i - 1)].x, cps[2 * (i - 1)].y,
+                pts[i].x, pts[i].y);
         }
         ctx.quadraticCurveTo(
-            cps[(2 * (i - 1) - 1) * 2], cps[(2 * (i - 1) - 1) * 2 + 1],
-            pts[i * 2], pts[i * 2 + 1]);
+            cps[(2 * (i - 1) - 1)].x, cps[(2 * (i - 1) - 1)].y,
+            pts[i].x, pts[i].y);
         ctx.stroke();
     }
 }
