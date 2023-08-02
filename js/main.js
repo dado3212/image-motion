@@ -368,12 +368,33 @@ function createCommand() {
 function linear(expression, p1, p2, i) {
     const len = (DURATION_SECONDS * FPS) / (shots.length - 1);
 
+    const t = `(on - ${len * i}) / ${len}`;
+
+    const linearFunction = `${p1} + ${p2 - p1} * ${t}`;
+
     if (i == shots.length - 2) {
-        expression += `${p1} + ${p2 - p1} * (on - ${len * i}) / ${len}`;
+        expression += linearFunction;
     } else {
         expression += 'if('
             + 'lte(on, ' + len * (i + 1) + '),'
-            + p1 + ' + ' + (p2 - p1) + ' * (on - ' + len * i + ') / ' + len + ',';
+            + linearFunction + ',';
+    }
+    return expression;
+}
+
+function quadraticBezier(expression, p1, c1, p2, i) {
+    const len = (DURATION_SECONDS * FPS) / (shots.length - 1);
+
+    const t = `(on - ${len * i}) / ${len}`;
+
+    const quadraticBezierFunction = `(1 - ${t})^2 * ${p1} + 2 * (1 - ${t}) * ${t} * ${c1} + ${t}^2 * ${p2}`;
+
+    if (i == shots.length - 2) {
+        expression += quadraticBezierFunction;
+    } else {
+        expression += 'if('
+            + 'lte(on, ' + len * (i + 1) + '),'
+            + quadraticBezierFunction + ',';
     }
     return expression;
 }
