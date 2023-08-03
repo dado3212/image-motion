@@ -3,6 +3,12 @@ import {
     convertDataURIToBinary
 } from './util.js'
 
+import {
+    Point,
+    CubicBezier,
+    dista
+} from './bezier.js'
+
 // Global context
 var shots = [];
 var images = [];
@@ -27,13 +33,6 @@ let originalHeight = 0;
 let file_name = '';
 
 var canvas, ctx;
-
-class Point {
-    constructor(x, y) {
-      this.x = x;
-      this.y = y;
-    }
-}
 
 // For output
 let DURATION_SECONDS = 10;
@@ -332,8 +331,8 @@ function createClick(event) {
         //arguments: '-r 60 -i img%03d.jpeg -c:v libx264 -crf 1 -vf -pix_fmt yuv420p -vb 20M out.mp4'.split(' '),
         MEMFS: images
     });
-    // const command = createCommand();
-    // console.log(command);
+    const command = createCommand();
+    console.log(command);
     // alert(command);
 }
 
@@ -448,6 +447,8 @@ function createCommand() {
                 cps[(2 * (i - 1))].x,
                 pts[i].x,
             );
+            const f = new CubicBezier(pts[i-1], cps[(2 * (i - 1) - 1)],cps[(2 * (i - 1))], pts[i]);
+            console.log(f.length);
             yExpression = cubicBezier(
                 yExpression,
                 i - 1,
@@ -562,10 +563,6 @@ function clearFrames() {
  */
 function clear() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function dista(p_i, p_j) {
-    return Math.sqrt(Math.pow(p_i.x - p_j.x, 2) + Math.pow(p_i.y - p_j.y, 2));
 }
 
 function ctlpts(one, two, three) {
