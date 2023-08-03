@@ -1,6 +1,7 @@
 
 // Global context
 var shots = [];
+var images = [];
 
 var gestureStartScale = 0;
 var scale = 1;
@@ -257,7 +258,15 @@ function addScreenshot(event) {
 
     // Convert the canvas to an image
     const image = new Image();
-    image.src = canvas.toDataURL();
+    const imgString = canvas.toDataURL('image/jpeg', 1 /* max quality */);
+    image.src = imgString;
+
+    const data = convertDataURIToBinary(imgString);
+
+    images.push({
+        name: `img${images.length}.jpeg`,
+		data: data,
+    });
 
     const newDiv = document.createElement('div');
     newDiv.classList.add('snapshot');
@@ -286,11 +295,70 @@ function isNaturalScrolling() {
     return answer;
 }
 
+function convertDataURIToBinary(dataURI) {
+    var base64 = dataURI.replace(/^data[^,]+,/,'');
+    var raw = window.atob(base64);
+    var rawLength = raw.length;
+
+    var array = new Uint8Array(new ArrayBuffer(rawLength));
+    for (i = 0; i < rawLength; i++) {
+        array[i] = raw.charCodeAt(i);
+    }
+    return array;
+}
+
 function createClick(event) {
     event.stopPropagation();
-    const command = createCommand();
-    console.log(command);
-    alert(command);
+
+    const worker = new Worker('./js/ffmpeg-worker-mp4.js')
+
+    worker.onmessage = function(e) {
+        var msg = e.data;
+        if (msg.type == 'done') {
+            const blob = new Blob([msg.data.MEMFS[0].data], {
+                type: "video/mp4"
+            });
+            console.log(blob);
+
+            const url = webkitURL.createObjectURL(blob);
+            console.log(url);
+
+            document.getElementById('awesome').src = url; //toString converts it to a URL via Object URLs, falling back to DataURL
+            // $('download').style.display = '';
+            // $('download').href = url;
+        }
+        console.log(msg.type, msg.data);
+        // switch (msg.type) {
+        //     // case "stdout":
+        //     // case "stderr":
+        //     //     messages += msg.data + "\n";
+        //     //     break;
+        //     // case "exit":
+        //     //     console.log("Process exited with code " + msg.data);
+        //     //     //worker.terminate();
+        //     //     break;
+
+        //     case 'done':
+
+
+        //     break;
+        // }
+        // msgs.innerHTML = messages
+    };
+
+    // https://trac.ffmpeg.org/wiki/Slideshow
+    // https://semisignal.com/tag/ffmpeg-js/
+    worker.postMessage({
+        type: 'run',
+        TOTAL_MEMORY: 268435456,
+        //arguments: 'ffmpeg -framerate 24 -i img%03d.jpeg output.mp4'.split(' '),
+        arguments: ["-r", "20", "-i", "img%*.jpeg", "-c:v", "libx264", "-crf", "1", "-vf", "scale=150:150", "-pix_fmt", "yuv420p", "-vb", "20M", "out.mp4"],
+        //arguments: '-r 60 -i img%03d.jpeg -c:v libx264 -crf 1 -vf -pix_fmt yuv420p -vb 20M out.mp4'.split(' '),
+        MEMFS: images
+    });
+    // const command = createCommand();
+    // console.log(command);
+    // alert(command);
 }
 
 function createCommand() {
@@ -508,6 +576,8 @@ function clearFrames() {
     for (var i = 0; i < toRemove.length; i++) {
         toRemove[i].remove();
     }
+
+    images = [];
 
     // Clear the splines
     clear();
