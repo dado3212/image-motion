@@ -4,7 +4,7 @@
         <link rel="stylesheet" type="text/css" href="css/main.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
-        <script src="js/main.js"></script>
+        <script type="module" src="js/main.js"></script>
     </head>
 
     <body dropzone>
@@ -18,8 +18,8 @@
             </div>
             <div id="sidebar">
                 <div>
-                    <button onclick="event.stopPropagation(); clearFrames();">Reset All</button>
-                    <button onclick="createClick(event);">Create</button>
+                    <button id="reset">Reset All</button>
+                    <button id="create">Create</button>
                     <input type="checkbox" id="loop">
                     <label for="loop" style="user-select: none;">Loop</label><br>
                     <input type="number" id="duration" placeholder="10" min="0" max="300" value="8">

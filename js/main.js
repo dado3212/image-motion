@@ -1,3 +1,7 @@
+import {
+    isNaturalScrolling,
+    convertDataURIToBinary
+} from './util.js'
 
 // Global context
 var shots = [];
@@ -68,6 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load the image
         uploadImage(file);
     });
+
+    document.getElementById('reset').addEventListener('click', clearFrames);
+    document.getElementById('create').addEventListener('click', createClick);
 });
 
 function uploadImage(file) {
@@ -104,7 +111,7 @@ function uploadImage(file) {
             canvas.width = rawImage.width;
             canvas.height = rawImage.height;
 
-            offsetX = (tabWidth - 350 - rawImage.width) / 2;
+            let offsetX = (tabWidth - 350 - rawImage.width) / 2;
             document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
 
             // Set up the rectangle
@@ -279,34 +286,6 @@ function addScreenshot(event) {
     document.getElementById('frames').appendChild(newDiv);
 }
 
-function isNaturalScrolling() {
-    // Create a dummy element
-    var dummyElement = document.createElement('div');
-    // Apply the webkitOverflowScrolling property to the dummy element
-    dummyElement.style.webkitOverflowScrolling = 'touch';
-
-    // Get the computed style of the dummy element
-    var style = window.getComputedStyle(dummyElement);
-
-    // Check if the value of webkitOverflowScrolling is 'touch' (natural scrolling)
-    const answer = style.webkitOverflowScrolling === 'touch';
-
-    dummyElement.remove();
-    return answer;
-}
-
-function convertDataURIToBinary(dataURI) {
-    var base64 = dataURI.replace(/^data[^,]+,/,'');
-    var raw = window.atob(base64);
-    var rawLength = raw.length;
-
-    var array = new Uint8Array(new ArrayBuffer(rawLength));
-    for (i = 0; i < rawLength; i++) {
-        array[i] = raw.charCodeAt(i);
-    }
-    return array;
-}
-
 function createClick(event) {
     event.stopPropagation();
 
@@ -318,16 +297,13 @@ function createClick(event) {
             const blob = new Blob([msg.data.MEMFS[0].data], {
                 type: "video/mp4"
             });
-            console.log(blob);
 
             const url = webkitURL.createObjectURL(blob);
-            console.log(url);
 
             document.getElementById('awesome').src = url; //toString converts it to a URL via Object URLs, falling back to DataURL
             // $('download').style.display = '';
             // $('download').href = url;
         }
-        console.log(msg.type, msg.data);
         // switch (msg.type) {
         //     // case "stdout":
         //     // case "stderr":
@@ -438,7 +414,7 @@ function createCommand() {
     }
     currentLength = 0;
 
-    cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
+    var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
     for (var i = 0; i < pts.length - 2; i += 1) {
         cps = cps.concat(
             ctlpts(
@@ -462,8 +438,6 @@ function createCommand() {
         // For all middle points, it's cubic beziers
         for (var i = 2; i < shots.length - 1; i += 1) {
             len = (DURATION_SECONDS * FPS) * dista(pts[i-1], pts[i]) / TOTAL_LENGTH;
-            console.log(len);
-            console.log(currentLength);
 
             xExpression = cubicBezier(
                 xExpression,
@@ -595,7 +569,6 @@ function dista(p_i, p_j) {
 }
 
 function ctlpts(one, two, three) {
-    console.log(one, two, three);
     var t = 0.5; // tension
     var v = new Point(three.x - one.x, three.y - one.y);
     var d01 = dista(one, two);
@@ -630,7 +603,7 @@ function drawSplines() {
         // pts = addPts(pts, 1);
     }
 
-    cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
+    var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
     for (var i = 0; i < pts.length - 2; i += 1) {
         cps = cps.concat(
             ctlpts(
