@@ -5,10 +5,22 @@ class Point {
     }
 }
 
+class Frame {
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+}
+
 class Path {
     _length = null;
 
-    constructor() {}
+    constructor(point1, point2) {
+        this.p1 = point1;
+        this.p2 = point2;
+    }
 
     get length() {
         // If it's precomputed, just return it
@@ -25,7 +37,7 @@ class Path {
 
             x2 = this.#calcX((i + 1) / SEGMENTS);
             y2 = this.#calcY((i + 1) / SEGMENTS);
-            l += dista(new Point(x1, y1), new Point(x2, y2));
+            l += Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
         }
         this._length = l;
         return l;
@@ -33,10 +45,10 @@ class Path {
 
     frames(numFrames) {
         let f = [];
-        for (let i = 0; i < numFrames; i++) {
+        for (let i = 0; i <= numFrames; i++) {
             let x1 = this.#calcX(i / numFrames);
             let y1 = this.#calcY(i / numFrames);
-            f.push([x1, y1, 180, 320]);
+            f.push([x1, y1, this.p1.width, this.p1.height]);
         }
         return f;
     }
@@ -56,9 +68,7 @@ class Path {
 
 class Line extends Path {
     constructor(point1, point2) {
-        super();
-        this.p1 = point1;
-        this.p2 = point2;
+        super(point1, point2);
     }
 
     func(t, prop) {
@@ -69,26 +79,21 @@ class Line extends Path {
 class QuadraticBezier extends Path {
 
     constructor(point1, controlPoint1, point2) {
-        super();
-        this.p1 = point1;
+        super(point1, point2);
         this.cp = controlPoint1;
-        this.p2 = point2;
     }
 
     func(t, prop) {
-        let f = (1 - t) ** 2 * prop(this.p1) + 2 * (1 - t) * t * prop(this.cp) + t ** 2 * prop(this.p2);
-        return f;
+        return (1 - t) ** 2 * prop(this.p1) + 2 * (1 - t) * t * prop(this.cp) + t ** 2 * prop(this.p2);
     }
 }
 
 class CubicBezier extends Path {
 
     constructor(point1, controlPoint1, controlPoint2, point2) {
-        super();
-        this.p1 = point1;
+        super(point1, point2);
         this.cp1 = controlPoint1;
         this.cp2 = controlPoint2;
-        this.p2 = point2;
     }
 
     func(t, prop) {
@@ -96,14 +101,10 @@ class CubicBezier extends Path {
     }
 }
 
-function dista(p_i, p_j) {
-    return Math.sqrt(Math.pow(p_i.x - p_j.x, 2) + Math.pow(p_i.y - p_j.y, 2));
-}
-
 export {
     Point,
+    Frame,
     Line,
     QuadraticBezier,
     CubicBezier,
-    dista,
 }

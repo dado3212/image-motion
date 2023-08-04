@@ -31,9 +31,12 @@ function screenshot(image, x, y, width, height) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
+    const newWidth = Math.min(width, 1080);
+    const newHeight = Math.min(height, 1920);
+
     // Set the canvas dimensions
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = newWidth;
+    canvas.height = newHeight;
 
     ctx.drawImage(
         image,
@@ -45,8 +48,8 @@ function screenshot(image, x, y, width, height) {
         // Destination
         0,
         0,
-        width,
-        height
+        newWidth,
+        newHeight,
     );
 
     return canvas.toDataURL('image/jpeg', 1 /* max quality */);

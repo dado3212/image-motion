@@ -6,10 +6,10 @@ import {
 
 import {
     Point,
+    Frame,
     Line,
     QuadraticBezier,
     CubicBezier,
-    dista,
 } from './bezier.js'
 
 // Global context
@@ -270,12 +270,23 @@ function createClick(event) {
     const rawImage = document.getElementById('rawImage');
     const offsetScale = originalWidth / rawImage.width;
 
+    let zoomScalar = 1;
+    if (originalWidth * 16 / 9 > originalHeight) {
+        zoomScalar = rawImage.width / rectangleWidth;
+        // ffmpegOffsetY = (originalWidth * 16 / 9 - originalHeight) / 2;
+    } else {
+        zoomScalar = rawImage.height / rectangleHeight;
+        // ffmpegOffsetX = (originalHeight * 9 / 16 - originalWidth) / 2;
+    }
+
+
     pts = [];
 
     for (var i = 0; i < shots.length; i++) {
         const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale; //  + ffmpegOffsetX;
         const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale; //  + ffmpegOffsetY;
-        pts.push(new Point(x1, y1));
+        const scalar = parseFloat(shots[i].style.transform.slice(6, -1)) / zoomScalar;
+        pts.push(new Frame(x1, y1, scalar * originalWidth, scalar * originalHeight));
     }
 
     var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
@@ -298,11 +309,11 @@ function createClick(event) {
         paths.push(new QuadraticBezier(pts[0], cps[0], pts[1]));
         // For all middle points, it's cubic beziers
         for (var i = 2; i < shots.length - 1; i += 1) {
-            paths.push(new CubicBezier(pts[i-1], cps[(2 * (i - 1) - 1)], cps[(2 * (i - 1))], pts[i]));
+            paths.push(new CubicBezier(pts[i - 1], cps[(2 * (i - 1) - 1)], cps[(2 * (i - 1))], pts[i]));
         }
         // And the final one is a quadratic bezier (unless you're looping, TODO)
         i = shots.length - 1;
-        paths.push(new QuadraticBezier(pts[i-1], cps[(2 * (i - 1) - 1)], pts[i]));
+        paths.push(new QuadraticBezier(pts[i - 1], cps[(2 * (i - 1) - 1)], pts[i]));
     }
 
     // Figure out the overall lengths (and percentage)
@@ -322,11 +333,18 @@ function createClick(event) {
             const data = convertDataURIToBinary(imgString);
 
             images.push({
-                name: `img${images.length}.jpeg`,
+                name: `img${padWithZeros(images.length, 4)}.jpeg`,
                 data: data,
             });
+
+            const image = new Image();
+            image.src = imgString;
+
+            document.getElementById('frames').appendChild(image);
         }
     }
+
+    console.log(images.length);
     // ... they get TOTAL_FRAMES * perc
     // ... and we pace across to get the x/y
     // ... ignoring zoom for now (TODO)
@@ -370,17 +388,21 @@ function createClick(event) {
     // https://trac.ffmpeg.org/wiki/Slideshow
     // https://semisignal.com/tag/ffmpeg-js/
     worker.postMessage({
-        type: 'run',
-        TOTAL_MEMORY: 268435456, // no idea why this was this specific value
+        type: 'run', //             "-s", "ALLOW_MEMORY_GROWTH=1", // memory growth...?
+        TOTAL_MEMORY: 1073741824, // no idea why this was this specific value
         //arguments: 'ffmpeg -framerate 24 -i img%03d.jpeg output.mp4'.split(' '),
         arguments: [
             "-r", '' + FPS, // frame rate
-            "-i", "img%*.jpeg",
-            // "-c:v", "libx264",
-            // "-crf", "1", "-vf",
-            // "scale=1080x1920",
-            //"-pix_fmt", "yuv420p", "-vb", "20M",
-            "out.mp4"],
+
+            "-i", "img%04d.jpeg", // input files
+            "-c:v", "libx264", // video codec?
+             "-crf", "1", // video quality (0 to 51, 0 is lossless)
+              "-vf", "scale=1080:1920", "-pix_fmt", "yuv420p", "-vb", "20M", "out.mp4"],
+        // "-c:v", "libx264",
+        // "-crf", "1", "-vf",
+        // "scale=1080x1920",
+        //"-pix_fmt", "yuv420p", "-vb", "20M",
+        // "out.mp4"],
         //arguments: '-r 60 -i img%03d.jpeg -c:v libx264 -crf 1 -vf -pix_fmt yuv420p -vb 20M out.mp4'.split(' '),
         MEMFS: images
     });
@@ -409,6 +431,10 @@ function clear() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+function dista(p_i, p_j) {
+    return Math.sqrt(Math.pow(p_i.x - p_j.x, 2) + Math.pow(p_i.y - p_j.y, 2));
+}
+
 function ctlpts(one, two, three) {
     var t = 0.5; // tension
     var v = new Point(three.x - one.x, three.y - one.y);
@@ -422,6 +448,14 @@ function ctlpts(one, two, three) {
 }
 
 let pts = [];
+
+function padWithZeros(number, length) {
+    let str = number.toString();
+    while (str.length < length) {
+      str = '0' + str;
+    }
+    return str;
+  }
 
 function addPts(pts, i) {
     // Adjust the points to the center
