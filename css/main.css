@@ -52,11 +52,6 @@ body {
     transition: 'transform 0.3s ease-in-out';
 }
 
-/* TEMPORARY CSS PLEASE REMOVE */
-#frames > img {
-    width: 30px;
-}
-
 #sidebar {
     height: 100vh;
     width: 350px;
@@ -97,4 +92,42 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
+}
+
+/* Modal */
+#modal {
+    position: absolute;
+    top: 10%;
+    left: calc(50% - 400px);
+    width: 800px;
+    height: 80%;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #0000006e;
+    z-index: 4;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #f0f0f0;
+    height: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0;
+    background-color: #4caf50;
+    border-radius: 10px;
+    transition: width 0.3s;
+}
+
+#progressMessage {
+    color: white;
+}
+
+#outputVideo video {
+    height: 615px;
+    width: 100%;
 }

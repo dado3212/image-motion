@@ -75,6 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('reset').addEventListener('click', clearFrames);
     document.getElementById('create').addEventListener('click', createClick);
+
+    // Modal
+    document.getElementById('closeModal').addEventListener('click', (_) => {
+        document.getElementById('modal').style.display = "none";
+    });
 });
 
 function uploadImage(file) {
@@ -263,8 +268,17 @@ function addScreenshot(event) {
     document.getElementById('frames').appendChild(newDiv);
 }
 
+function progressUpdate(perc, message) {
+    document.getElementById("progressBar").style.width = perc + "%";
+    document.getElementById("progressMessage").innerHTML = message;
+}
+
 function createClick(event) {
     event.stopPropagation();
+
+    // Trigger the modal
+    document.getElementById('modal').style.display = "initial";
+    progressUpdate(0, 'Starting...');
 
     DURATION_SECONDS = parseInt(document.getElementById('duration').value);
     const rawImage = document.getElementById('rawImage');
@@ -286,6 +300,7 @@ function createClick(event) {
     }
 
     pts = [];
+    progressUpdate(1, 'Creating frames...');
 
     for (var i = 0; i < shots.length; i++) {
         const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale;
@@ -294,6 +309,7 @@ function createClick(event) {
         const dims = dimensionScaling(scalar);
         pts.push(new Frame(x1, y1, dims[0], dims[1]));
     }
+    progressUpdate(2, 'Interpolating...');
 
     var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
     for (var i = 0; i < pts.length - 2; i += 1) {
@@ -305,6 +321,7 @@ function createClick(event) {
             )
         );
     }
+    progressUpdate(3, 'Populating full paths...');
 
     // Create all of the paths
     let paths = [];
@@ -327,6 +344,7 @@ function createClick(event) {
     for (var j = 0; j < paths.length; j++) {
         totalLength += paths[j].length;
     }
+    progressUpdate(4, 'Calculating all images...');
 
     // And then get all of the images for each path
     images = [];
@@ -342,41 +360,52 @@ function createClick(event) {
                 name: `img${padWithZeros(images.length, 4)}.jpeg`,
                 data: data,
             });
+
+            progressUpdate(4 + 46 * images.length / (DURATION_SECONDS * FPS), 'Image ' + images.length + 1);
         }
     }
 
     const worker = new Worker('./js/ffmpeg-worker-mp4.js');
 
+    progressUpdate(51, 'Creating video');
+
     worker.onmessage = function (e) {
         var msg = e.data;
         console.log(msg);
-        if (msg.type == 'done') {
+        if (msg.type == 'stderr' || msg.type == 'stdout') {
+            let perc = 51;
+            const regex = /frame=\s*(\d+)/;
+            const match = msg.data.match(regex);
+
+            if (match && match[1]) {
+                perc = parseInt(match[1]) / (DURATION_SECONDS * FPS) * 49 + 51;
+            }
+            progressUpdate(perc, msg.data);
+        } else if (msg.type == 'done') {
             const blob = new Blob([msg.data.MEMFS[0].data], {
                 type: "video/mp4"
             });
 
+            progressUpdate(100, 'Done.');
+
             const url = webkitURL.createObjectURL(blob);
 
-            document.getElementById('awesome').src = url; //toString converts it to a URL via Object URLs, falling back to DataURL
-            // $('download').style.display = '';
-            // $('download').href = url;
+            const video = document.createElement('video');
+            video.width = 1080;
+            video.height = 1920;
+            video.controls = true;
+            video.autoplay = true;
+            video.loop = true;
+            video.src = url;
+
+            document.getElementById('outputVideo').innerHTML = '';
+            document.getElementById('outputVideo').appendChild(video);
+        } else if (msg.type == 'exit') {
+            progressUpdate(100, 'Process exited with code ' + msg.data);
+            if (msg.data != 0) {
+                worker.terminate();
+            }
         }
-        // switch (msg.type) {
-        //     // case "stdout":
-        //     // case "stderr":
-        //     //     messages += msg.data + "\n";
-        //     //     break;
-        //     // case "exit":
-        //     //     console.log("Process exited with code " + msg.data);
-        //     //     //worker.terminate();
-        //     //     break;
-
-        //     case 'done':
-
-
-        //     break;
-        // }
-        // msgs.innerHTML = messages
     };
 
     // https://trac.ffmpeg.org/wiki/Slideshow
