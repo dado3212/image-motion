@@ -36,6 +36,12 @@ let file_name = '';
 
 var canvas, ctx;
 
+const Tools = {
+    ADD: 'Add',
+    MOVE: 'Move',
+};
+let currentTool = Tools.ADD;
+
 // For output
 let DURATION_SECONDS = 10;
 const FPS = 30;
@@ -88,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Select addFrame
         document.getElementById('addFrame').classList.add('selected');
+        currentTool = Tools.ADD;
+
+        // Make the rectangle visible
+        document.getElementById('rectangle').style.display = "initial";
     });
 
     document.getElementById('moveFrame').addEventListener('click', (_) => {
@@ -96,8 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
         for (var i = 0; i < toolboxOptions.length; i++) {
             toolboxOptions[i].classList.remove('selected');
         }
-        // Select addFrame
+        // Select moveFrame
         document.getElementById('moveFrame').classList.add('selected');
+        currentTool = Tools.MOVE;
+
+        document.getElementById('rectangle').style.display = "none";
     });
 });
 
@@ -158,6 +171,9 @@ function setupImageListeners() {
     const naturalScroll = isNaturalScrolling();
 
     document.getElementById('container').addEventListener('mousemove', function (event) {
+        if (currentTool !== Tools.ADD) {
+            return;
+        }
         var rectangle = document.getElementById('rectangle');
 
         // Calculate the new position of the rectangle based on the cursor position
@@ -167,8 +183,6 @@ function setupImageListeners() {
         // Set the new position for the rectangle
         rectangle.style.left = x + 'px';
         rectangle.style.top = y + 'px';
-
-        // TODO: Set the scale point for the image
     });
 
     // Detect the wheel event (including the trackpad pinch gesture)
@@ -222,6 +236,9 @@ function setupImageListeners() {
 
 
     document.getElementById('container').addEventListener('click', function (event) {
+        if (currentTool !== Tools.ADD) {
+            return;
+        }
         // Add a little indicator of where you are
         addRectangle(event);
 
@@ -231,6 +248,9 @@ function setupImageListeners() {
         drawSplines();
     });
 }
+
+// Drag and drop
+function
 
 function addRectangle(event) {
     const originalElement = document.getElementById('rectangle');
@@ -251,6 +271,8 @@ function addRectangle(event) {
     newRectangle.style.left = x + 'px';
     newRectangle.style.top = y + 'px';
     newRectangle.style.transform = `scale(${1 / scale})`;
+
+    newRectangle.draggable = true;
 
     const span = document.createElement('span');
     span.innerHTML = (shots.length + 1)
