@@ -263,20 +263,6 @@ function addScreenshot(event) {
     document.getElementById('frames').appendChild(newDiv);
 }
 
-window.requestAnimFrame = (function(callback)
-{
-    return window.requestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    window.oRequestAnimationFrame ||
-    window.msRequestAnimationFrame ||
-    function(callback)
-    {
-      window.setTimeout(callback, 1000 / 30);
-    };
-}
-)();
-
 function createClick(event) {
     event.stopPropagation();
 
@@ -344,7 +330,6 @@ function createClick(event) {
 
     // And then get all of the images for each path
     images = [];
-    let drawnImages = [];
     for (var j = 0; j < paths.length; j++) {
         let numFrames = DURATION_SECONDS * FPS * paths[j].length / totalLength;
         let frames = paths[j].frames(numFrames);
@@ -357,45 +342,8 @@ function createClick(event) {
                 name: `img${padWithZeros(images.length, 4)}.jpeg`,
                 data: data,
             });
-            // imageStrings.push(imgString);
-
-            const image = new Image();
-            image.src = imgString;
-            drawnImages.push(image);
-            // document.getElementById('frames').appendChild(image);
         }
     }
-
-    console.log(images.length);
-
-    // ... they get TOTAL_FRAMES * perc
-    // ... and we pace across to get the x/y
-    // ... ignoring zoom for now (TODO)
-    // ... and for each point we snap the picture
-    // ... and add it to the list
-
-    // const imageCanvas = document.createElement('canvas');
-    // imageCanvas.width = 1080;
-    // imageCanvas.height = 1920;
-    // const ctx = imageCanvas.getContext('2d');
-
-    // document.getElementById('frames').appendChild(imageCanvas);
-
-    // ctx.fillStyle = 'white';
-    // ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // var i = 0;
-
-    // let draw = () => {
-    //     //loop here for loading system
-    //     ctx.drawImage(drawnImages[i],0,0,1080,1920,0,0,1080,1920);
-    //     i = (i + 1) % drawnImages.length;
-
-    //     setTimeout(() => {
-    //         requestAnimFrame(draw);
-    //       }, 1000 / 30);
-    // };
-    // draw();
 
     const worker = new Worker('./js/ffmpeg-worker-mp4.js');
 
