@@ -16,6 +16,7 @@ class Frame {
 
 class Path {
     _length = null;
+    _pieces = [];
 
     constructor(point1, point2) {
         this.p1 = point1;
@@ -32,6 +33,8 @@ class Path {
         const SEGMENTS = 100;
         let x1, y1, x2, y2, l = 0;
         for (let i = 0; i <= SEGMENTS; i++) {
+            this._pieces.push([l, i / SEGMENTS]);
+
             x1 = this.#calcX(i / SEGMENTS);
             y1 = this.#calcY(i / SEGMENTS);
 
@@ -44,10 +47,24 @@ class Path {
     }
 
     frames(numFrames) {
+        const avgDistance = this._length / numFrames;
         let f = [];
         for (let i = 0; i <= numFrames; i++) {
-            let x1 = this.#calcX(i / numFrames);
-            let y1 = this.#calcY(i / numFrames);
+            const targetDistance = avgDistance * i;
+            let targetFloat = this._pieces[this._pieces.length - 1][1];
+            for (let j = 0; j < this._pieces.length; j++) {
+                if (this._pieces[j][0] == targetDistance) {
+                    targetFloat = this._pieces[j][1];
+                    break;
+                } else if (this._pieces[j][0] > targetDistance) {
+                    // interpolate
+                    const perc = (targetDistance - this._pieces[j-1][0]) / (this._pieces[j][0] - this._pieces[j-1][0]);
+                    targetFloat = (1 - perc) * this._pieces[j-1][1] + perc * this._pieces[j][1];
+                    break;
+                }
+            }
+            let x1 = this.#calcX(targetFloat);
+            let y1 = this.#calcY(targetFloat);
             f.push([x1, y1, this.p1.width, this.p1.height]);
         }
         return f;

@@ -396,8 +396,12 @@ function createClick(event) {
 
             "-i", "img%04d.jpeg", // input files
             "-c:v", "libx264", // video codec?
-             "-crf", "1", // video quality (0 to 51, 0 is lossless)
-              "-vf", "scale=1080:1920", "-pix_fmt", "yuv420p", "-vb", "20M", "out.mp4"],
+            "-crf", "1", // video quality (0 to 51, 0 is lossless)
+            "-vf", "scale=1080:1920", // output scale
+            "-pix_fmt", "yuv420p", // pixel format
+            "-vb", "20M", // 20MB/s bitrate
+            "out.mp4"
+        ],
         // "-c:v", "libx264",
         // "-crf", "1", "-vf",
         // "scale=1080x1920",
@@ -452,10 +456,10 @@ let pts = [];
 function padWithZeros(number, length) {
     let str = number.toString();
     while (str.length < length) {
-      str = '0' + str;
+        str = '0' + str;
     }
     return str;
-  }
+}
 
 function addPts(pts, i) {
     // Adjust the points to the center
