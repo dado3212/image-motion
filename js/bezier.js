@@ -18,9 +18,15 @@ class Path {
     _length = null;
     _pieces = [];
 
-    constructor(point1, point2) {
-        this.p1 = point1;
-        this.p2 = point2;
+    constructor(frame1, frame2) {
+        this.f1 = frame1;
+        this.f2 = frame2;
+    }
+
+    serialize() {
+        const self = JSON.parse(JSON.stringify(this));
+        self.name = this.constructor.name;
+        return JSON.stringify(self);
     }
 
     get length() {
@@ -66,8 +72,8 @@ class Path {
             }
             let x1 = this.#calcX(targetFloat);
             let y1 = this.#calcY(targetFloat);
-            let width = this.p1.width + (this.p2.width - this.p1.width) * i / numFrames;
-            let height = this.p1.height + (this.p2.height - this.p1.height) * i / numFrames;
+            let width = this.f1.width + (this.f2.width - this.f1.width) * i / numFrames;
+            let height = this.f1.height + (this.f2.height - this.f1.height) * i / numFrames;
             f.push([x1, y1, width, height]);
         }
         return f;
@@ -87,37 +93,37 @@ class Path {
 }
 
 class Line extends Path {
-    constructor(point1, point2) {
-        super(point1, point2);
+    constructor(frame1, frame2) {
+        super(frame1, frame2);
     }
 
     func(t, prop) {
-        return prop(this.p1) + (prop(this.p2) - prop(this.p1)) * t;
+        return prop(this.f1) + (prop(this.f2) - prop(this.f1)) * t;
     }
 }
 
 class QuadraticBezier extends Path {
 
-    constructor(point1, controlPoint1, point2) {
-        super(point1, point2);
+    constructor(frame1, controlPoint1, frame2) {
+        super(frame1, frame2);
         this.cp = controlPoint1;
     }
 
     func(t, prop) {
-        return (1 - t) ** 2 * prop(this.p1) + 2 * (1 - t) * t * prop(this.cp) + t ** 2 * prop(this.p2);
+        return (1 - t) ** 2 * prop(this.f1) + 2 * (1 - t) * t * prop(this.cp) + t ** 2 * prop(this.f2);
     }
 }
 
 class CubicBezier extends Path {
 
-    constructor(point1, controlPoint1, controlPoint2, point2) {
-        super(point1, point2);
+    constructor(frame1, controlPoint1, controlPoint2, frame2) {
+        super(frame1, frame2);
         this.cp1 = controlPoint1;
         this.cp2 = controlPoint2;
     }
 
     func(t, prop) {
-        return (1 - t) ** 3 * prop(this.p1) + 3 * (1 - t) ** 2 * t * prop(this.cp1) + 3 * (1 - t) * t ** 2 * prop(this.cp2) + t ** 3 * prop(this.p2);
+        return (1 - t) ** 3 * prop(this.f1) + 3 * (1 - t) ** 2 * t * prop(this.cp1) + 3 * (1 - t) * t ** 2 * prop(this.cp2) + t ** 3 * prop(this.f2);
     }
 }
 

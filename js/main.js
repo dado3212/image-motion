@@ -1,6 +1,5 @@
 import {
     isNaturalScrolling,
-    convertDataURIToBinary,
     screenshot
 } from './util.js'
 
@@ -287,13 +286,13 @@ function createClick(event) {
     let dimensionScaling;
     if (originalWidth * 16 / 9 > originalHeight) {
         dimensionScaling = (scalar) => {
-            const widthScalar =  rectangleWidth / rawImage.width;
+            const widthScalar = rectangleWidth / rawImage.width;
             const width = widthScalar * scalar * originalWidth;
             return [width, width * 16 / 9];
         }
     } else {
         dimensionScaling = (scalar) => {
-            const heightScalar =  rectangleHeight / rawImage.height;
+            const heightScalar = rectangleHeight / rawImage.height;
             const height = heightScalar * scalar * originalHeight;
             return [width * 9 / 16, height];
         }
@@ -340,93 +339,48 @@ function createClick(event) {
     }
 
     // Figure out the overall lengths (and percentage)
-    let totalLength = 0;
-    for (var j = 0; j < paths.length; j++) {
-        totalLength += paths[j].length;
-    }
     progressUpdate(4, 'Calculating all images...');
 
-    // And then get all of the images for each path
-    images = [];
-    for (var j = 0; j < paths.length; j++) {
-        let numFrames = DURATION_SECONDS * FPS * paths[j].length / totalLength;
-        let frames = paths[j].frames(numFrames);
+    let offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = 1080;
+    offscreenCanvas.height = 1920;
 
-        for (var k = 0; k < frames.length; k++) {
-            let imgString = screenshot(rawImage, frames[k][0], frames[k][1], frames[k][2], frames[k][3]);
-            const data = convertDataURIToBinary(imgString);
+    if (offscreenCanvas.transferControlToOffscreen) {
+        offscreenCanvas = offscreenCanvas.transferControlToOffscreen();
+        const worker = new Worker('./js/create-video-worker.js', { type: "module" });
+        worker.onmessage = function (event) {
+            progressUpdate(event.data.progress, event.data.message);
+            if (event.data.videoBlob) {
+                const url = webkitURL.createObjectURL(event.data.videoBlob);
 
-            images.push({
-                name: `img${padWithZeros(images.length, 4)}.jpeg`,
-                data: data,
-            });
+                const video = document.createElement('video');
+                video.width = 1080;
+                video.height = 1920;
+                video.controls = true;
+                video.autoplay = true;
+                video.loop = true;
+                video.src = url;
 
-            progressUpdate(4 + 46 * images.length / (DURATION_SECONDS * FPS), 'Image ' + images.length + 1);
+                document.getElementById('outputVideo').innerHTML = '';
+                document.getElementById('outputVideo').appendChild(video);
+            }
+        };
+
+        const serializedPaths = [];
+        for (var i = 0; i < paths.length; i++) {
+            serializedPaths.push(paths[i].serialize());
         }
+
+        worker.postMessage({
+            canvas: offscreenCanvas,
+            imageSrc: rawImage.src,
+            paths: serializedPaths,
+            duration: DURATION_SECONDS,
+            fps: FPS,
+        }, [offscreenCanvas]);
+    } else {
+        progressUpdate(100, 'Offscreen canvas is not supported in this browser.');
     }
-
-    const worker = new Worker('./js/ffmpeg-worker-mp4.js');
-
-    progressUpdate(51, 'Creating video');
-
-    worker.onmessage = function (e) {
-        var msg = e.data;
-        console.log(msg);
-        if (msg.type == 'stderr' || msg.type == 'stdout') {
-            let perc = 51;
-            const regex = /frame=\s*(\d+)/;
-            const match = msg.data.match(regex);
-
-            if (match && match[1]) {
-                perc = parseInt(match[1]) / (DURATION_SECONDS * FPS) * 49 + 51;
-            }
-            progressUpdate(perc, msg.data);
-        } else if (msg.type == 'done') {
-            const blob = new Blob([msg.data.MEMFS[0].data], {
-                type: "video/mp4"
-            });
-
-            progressUpdate(100, 'Done.');
-
-            const url = webkitURL.createObjectURL(blob);
-
-            const video = document.createElement('video');
-            video.width = 1080;
-            video.height = 1920;
-            video.controls = true;
-            video.autoplay = true;
-            video.loop = true;
-            video.src = url;
-
-            document.getElementById('outputVideo').innerHTML = '';
-            document.getElementById('outputVideo').appendChild(video);
-        } else if (msg.type == 'exit') {
-            progressUpdate(100, 'Process exited with code ' + msg.data);
-            if (msg.data != 0) {
-                worker.terminate();
-            }
-        }
-    };
-
-    // https://trac.ffmpeg.org/wiki/Slideshow
-    // https://semisignal.com/tag/ffmpeg-js/
-    worker.postMessage({
-        type: 'run',
-        TOTAL_MEMORY: 1073741824, // no idea why this was this specific value
-        //arguments: 'ffmpeg -framerate 24 -i img%03d.jpeg output.mp4'.split(' '),
-        arguments: [
-            "-r", '' + FPS, // frame rate
-            "-i", "img%04d.jpeg", // input files
-            "-c:v", "libx264", // video codec?
-            "-preset", "ultrafast", //
-            "-crf", "22", // video quality (0 to 51, 0 is lossless)
-            "-vf", "scale=1080:1920", // output scale
-            "-pix_fmt", "yuv420p", // pixel format
-            "-vb", "20M", // 20MB/s bitrate
-            "out.mp4"
-        ],
-        MEMFS: images
-    });
 }
 
 function clearFrames() {
@@ -469,14 +423,6 @@ function ctlpts(one, two, three) {
 }
 
 let pts = [];
-
-function padWithZeros(number, length) {
-    let str = number.toString();
-    while (str.length < length) {
-        str = '0' + str;
-    }
-    return str;
-}
 
 function addPts(pts, i) {
     // Adjust the points to the center
