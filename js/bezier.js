@@ -66,7 +66,9 @@ class Path {
             }
             let x1 = this.#calcX(targetFloat);
             let y1 = this.#calcY(targetFloat);
-            f.push([x1, y1, this.p1.width, this.p1.height]);
+            let width = this.p1.width + (this.p2.width - this.p1.width) * i / numFrames;
+            let height = this.p1.height + (this.p2.height - this.p1.height) * i / numFrames;
+            f.push([x1, y1, width, height]);
         }
         return f;
     }
