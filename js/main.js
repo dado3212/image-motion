@@ -270,23 +270,29 @@ function createClick(event) {
     const rawImage = document.getElementById('rawImage');
     const offsetScale = originalWidth / rawImage.width;
 
-    let zoomScalar = 1;
+    let dimensionScaling;
     if (originalWidth * 16 / 9 > originalHeight) {
-        zoomScalar = rawImage.width / rectangleWidth;
-        // ffmpegOffsetY = (originalWidth * 16 / 9 - originalHeight) / 2;
+        dimensionScaling = (scalar) => {
+            const widthScalar =  rectangleWidth / rawImage.width;
+            const width = widthScalar * scalar * originalWidth;
+            return [width, width * 16 / 9];
+        }
     } else {
-        zoomScalar = rawImage.height / rectangleHeight;
-        // ffmpegOffsetX = (originalHeight * 9 / 16 - originalWidth) / 2;
+        dimensionScaling = (scalar) => {
+            const heightScalar =  rectangleHeight / rawImage.height;
+            const height = heightScalar * scalar * originalHeight;
+            return [width * 9 / 16, height];
+        }
     }
-
 
     pts = [];
 
     for (var i = 0; i < shots.length; i++) {
-        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale; //  + ffmpegOffsetX;
-        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale; //  + ffmpegOffsetY;
-        const scalar = parseFloat(shots[i].style.transform.slice(6, -1)) / zoomScalar;
-        pts.push(new Frame(x1, y1, scalar * originalWidth, scalar * originalHeight));
+        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale;
+        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale;
+        const scalar = parseFloat(shots[i].style.transform.slice(6, -1));
+        const dims = dimensionScaling(scalar);
+        pts.push(new Frame(x1, y1, dims[0], dims[1]));
     }
 
     var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
@@ -345,6 +351,7 @@ function createClick(event) {
     }
 
     console.log(images.length);
+
     // ... they get TOTAL_FRAMES * perc
     // ... and we pace across to get the x/y
     // ... ignoring zoom for now (TODO)
@@ -388,12 +395,11 @@ function createClick(event) {
     // https://trac.ffmpeg.org/wiki/Slideshow
     // https://semisignal.com/tag/ffmpeg-js/
     worker.postMessage({
-        type: 'run', //             "-s", "ALLOW_MEMORY_GROWTH=1", // memory growth...?
+        type: 'run',
         TOTAL_MEMORY: 1073741824, // no idea why this was this specific value
         //arguments: 'ffmpeg -framerate 24 -i img%03d.jpeg output.mp4'.split(' '),
         arguments: [
             "-r", '' + FPS, // frame rate
-
             "-i", "img%04d.jpeg", // input files
             "-c:v", "libx264", // video codec?
             "-crf", "1", // video quality (0 to 51, 0 is lossless)
@@ -402,12 +408,6 @@ function createClick(event) {
             "-vb", "20M", // 20MB/s bitrate
             "out.mp4"
         ],
-        // "-c:v", "libx264",
-        // "-crf", "1", "-vf",
-        // "scale=1080x1920",
-        //"-pix_fmt", "yuv420p", "-vb", "20M",
-        // "out.mp4"],
-        //arguments: '-r 60 -i img%03d.jpeg -c:v libx264 -crf 1 -vf -pix_fmt yuv420p -vb 20M out.mp4'.split(' '),
         MEMFS: images
     });
 }

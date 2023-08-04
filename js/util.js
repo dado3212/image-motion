@@ -27,20 +27,19 @@ function convertDataURIToBinary(dataURI) {
     return array;
 }
 
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
 function screenshot(image, x, y, width, height) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    console.log(x, y, width, height);
-
     const newWidth = Math.min(width, 1080);
     const newHeight = Math.min(height, 1920);
-
-    console.log(newWidth, newHeight);
 
     // Set the canvas dimensions
     canvas.width = newWidth;
     canvas.height = newHeight;
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.drawImage(
         image,

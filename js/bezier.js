@@ -32,7 +32,7 @@ class Path {
         // Approximate the length with 100 segments
         const SEGMENTS = 100;
         let x1, y1, x2, y2, l = 0;
-        for (let i = 0; i <= SEGMENTS; i++) {
+        for (let i = 0; i < SEGMENTS; i++) {
             this._pieces.push([l, i / SEGMENTS]);
 
             x1 = this.#calcX(i / SEGMENTS);
@@ -42,6 +42,7 @@ class Path {
             y2 = this.#calcY((i + 1) / SEGMENTS);
             l += Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
         }
+        this._pieces.push([l, 1.0]);
         this._length = l;
         return l;
     }
