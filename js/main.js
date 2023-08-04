@@ -1,12 +1,15 @@
 import {
     isNaturalScrolling,
-    convertDataURIToBinary
+    convertDataURIToBinary,
+    screenshot
 } from './util.js'
 
 import {
     Point,
+    Line,
+    QuadraticBezier,
     CubicBezier,
-    dista
+    dista,
 } from './bezier.js'
 
 // Global context
@@ -36,8 +39,6 @@ var canvas, ctx;
 
 // For output
 let DURATION_SECONDS = 10;
-let TOTAL_LENGTH = 0;
-let currentLength = 0;
 const FPS = 30;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -240,39 +241,16 @@ function addScreenshot(event) {
     const rawImage = document.getElementById('rawImage');
     const imageBounding = rawImage.getBoundingClientRect();
 
-    // Create a canvas dynamically
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const x = parseInt(shots[shots.length - 1].style.left.slice(0, -2)) / imageBounding.width * scale * originalWidth;
+    const y = parseInt(shots[shots.length - 1].style.top.slice(0, -2)) / imageBounding.height * scale * originalHeight;
+    const width = newestRectangle.width / imageBounding.width * originalWidth;
+    const height = newestRectangle.height / imageBounding.height * originalHeight;
 
-    // Set the canvas dimensions
-    canvas.width = rectangleWidth;
-    canvas.height = rectangleHeight;
-
-    ctx.drawImage(
-        rawImage,
-        // Source
-        parseInt(shots[shots.length - 1].style.left.slice(0, -2)) / imageBounding.width * scale * originalWidth,
-        parseInt(shots[shots.length - 1].style.top.slice(0, -2)) / imageBounding.height * scale * originalHeight,
-        newestRectangle.width / imageBounding.width * originalWidth,
-        newestRectangle.height / imageBounding.height * originalHeight,
-        // Destination
-        0,
-        0,
-        rectangleWidth,
-        rectangleHeight
-    );
+    const imgString = screenshot(rawImage, x, y, width, height);
 
     // Convert the canvas to an image
     const image = new Image();
-    const imgString = canvas.toDataURL('image/jpeg', 1 /* max quality */);
     image.src = imgString;
-
-    const data = convertDataURIToBinary(imgString);
-
-    images.push({
-        name: `img${images.length}.jpeg`,
-		data: data,
-    });
 
     const newDiv = document.createElement('div');
     newDiv.classList.add('snapshot');
@@ -288,10 +266,78 @@ function addScreenshot(event) {
 function createClick(event) {
     event.stopPropagation();
 
-    const worker = new Worker('./js/ffmpeg-worker-mp4.js')
+    DURATION_SECONDS = parseInt(document.getElementById('duration').value);
+    const rawImage = document.getElementById('rawImage');
+    const offsetScale = originalWidth / rawImage.width;
 
-    worker.onmessage = function(e) {
+    pts = [];
+
+    for (var i = 0; i < shots.length; i++) {
+        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale; //  + ffmpegOffsetX;
+        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale; //  + ffmpegOffsetY;
+        pts.push(new Point(x1, y1));
+    }
+
+    var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
+    for (var i = 0; i < pts.length - 2; i += 1) {
+        cps = cps.concat(
+            ctlpts(
+                pts[i],
+                pts[i + 1],
+                pts[i + 2],
+            )
+        );
+    }
+
+    // Create all of the paths
+    let paths = [];
+    if (shots.length == 2) {
+        paths.push(new Line(pts[0], pts[1]));
+    } else {
+        // From point 0 to point 1 is a quadratic bezier
+        paths.push(new QuadraticBezier(pts[0], cps[0], pts[1]));
+        // For all middle points, it's cubic beziers
+        for (var i = 2; i < shots.length - 1; i += 1) {
+            paths.push(new CubicBezier(pts[i-1], cps[(2 * (i - 1) - 1)], cps[(2 * (i - 1))], pts[i]));
+        }
+        // And the final one is a quadratic bezier (unless you're looping, TODO)
+        i = shots.length - 1;
+        paths.push(new QuadraticBezier(pts[i-1], cps[(2 * (i - 1) - 1)], pts[i]));
+    }
+
+    // Figure out the overall lengths (and percentage)
+    let totalLength = 0;
+    for (var j = 0; j < paths.length; j++) {
+        totalLength += paths[j].length;
+    }
+
+    // And then get all of the images for each path
+    images = [];
+    for (var j = 0; j < paths.length; j++) {
+        let numFrames = DURATION_SECONDS * FPS * paths[j].length / totalLength;
+        let frames = paths[j].frames(numFrames);
+
+        for (var k = 0; k < frames.length; k++) {
+            let imgString = screenshot(rawImage, frames[k][0], frames[k][1], frames[k][2], frames[k][3]);
+            const data = convertDataURIToBinary(imgString);
+
+            images.push({
+                name: `img${images.length}.jpeg`,
+                data: data,
+            });
+        }
+    }
+    // ... they get TOTAL_FRAMES * perc
+    // ... and we pace across to get the x/y
+    // ... ignoring zoom for now (TODO)
+    // ... and for each point we snap the picture
+    // ... and add it to the list
+
+    const worker = new Worker('./js/ffmpeg-worker-mp4.js');
+
+    worker.onmessage = function (e) {
         var msg = e.data;
+        console.log(msg);
         if (msg.type == 'done') {
             const blob = new Blob([msg.data.MEMFS[0].data], {
                 type: "video/mp4"
@@ -325,221 +371,19 @@ function createClick(event) {
     // https://semisignal.com/tag/ffmpeg-js/
     worker.postMessage({
         type: 'run',
-        TOTAL_MEMORY: 268435456,
+        TOTAL_MEMORY: 268435456, // no idea why this was this specific value
         //arguments: 'ffmpeg -framerate 24 -i img%03d.jpeg output.mp4'.split(' '),
-        arguments: ["-r", "20", "-i", "img%*.jpeg", "-c:v", "libx264", "-crf", "1", "-vf", "scale=150:150", "-pix_fmt", "yuv420p", "-vb", "20M", "out.mp4"],
+        arguments: [
+            "-r", '' + FPS, // frame rate
+            "-i", "img%*.jpeg",
+            // "-c:v", "libx264",
+            // "-crf", "1", "-vf",
+            // "scale=1080x1920",
+            //"-pix_fmt", "yuv420p", "-vb", "20M",
+            "out.mp4"],
         //arguments: '-r 60 -i img%03d.jpeg -c:v libx264 -crf 1 -vf -pix_fmt yuv420p -vb 20M out.mp4'.split(' '),
         MEMFS: images
     });
-    const command = createCommand();
-    console.log(command);
-    // alert(command);
-}
-
-function createCommand() {
-    // Can't animate a single keyframe, just crop the image dumbass.
-    if (shots.length <= 1) {
-        return '';
-    }
-
-    DURATION_SECONDS = parseInt(document.getElementById('duration').value);
-
-    const rawImage = document.getElementById('rawImage');
-    const offsetScale = originalWidth / rawImage.width;
-
-    // This value is currently the adjustment that we use to scale the rectangle
-    // But we need to convert it into the scale of the IMAGE
-    var zoomScalar = 1;
-    var ffmpegOffsetX = 0;
-    var ffmpegOffsetY = 0;
-
-    let command = 'ffmpeg';
-    // command += ' -loop 1'; // not sure if this does anything
-    command += ' -i ' + file_name; // input file from the upload (run in directory)
-    command += ' -loglevel error'; // suppress everything but errors for now
-    command += ' -filter_complex "'; // We are going to create a complex filter using zoompan
-
-    // If an image is not 9:16 as input, then zoompan will reshape it, leading to it not keeping
-    // the right aspect ratio. To resolve this, we pad the image with white bars to get it to 9:16.
-    // If it's not tall enough, we'll pad y
-    if (originalWidth * 16 / 9 > originalHeight) {
-        command += "pad=w=iw:h=iw*16/9:x='0':y='(oh-ih)/2':color=white,";
-        // Take the scalar from the height comparison
-        zoomScalar = rawImage.width / rectangleWidth;
-        ffmpegOffsetY = (originalWidth * 16 / 9 - originalHeight) / 2;
-    } else {
-        // ...it's not wide enough, so we'll pad x.
-        command += "pad=w=ih*9/16:h=ih:x='(ow-iw)/2':y='0':color=white,";
-        // Take the scalar from the width comparison
-        zoomScalar = rawImage.height / rectangleHeight;
-        ffmpegOffsetX = (originalHeight * 9 / 16 - originalWidth) / 2;
-    }
-
-    command += 'zoompan='; // start the zoompan
-    command += "d=" + (DURATION_SECONDS * FPS); // number of frames for total run
-    command += ":fps=" + FPS;
-    command += ":s=1080x1920"; // // 9:16 output image size
-
-    /**
-     * Sample tweening function for four shots:
-     *
-     * if (
-     *  lte(on, ftl),
-     *  x1 + (x2-x1) * on / ftl,
-     *  if (
-     *    lte(on, ftl * 2),
-     *    x2 + (x3 - x2) * (on - ftl) / (ftl * 2),
-     *    x3 + (x4 - x3) * (on - ftl * 2) / (ftl * 3)
-     *  )
-     * )
-     */
-    let zoomExpression = ":z='";
-    let xExpression = ":x='";
-    let yExpression = ":y='";
-
-    // Extract positions
-    pts = [];
-
-    for (var i = 0; i < shots.length; i++) {
-        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale + ffmpegOffsetX;
-        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale + ffmpegOffsetY;
-        pts.push(new Point(x1, y1));
-    }
-
-    // Determine the total length of the curve
-    TOTAL_LENGTH = 0;
-    for (var i = 0; i < pts.length - 1; i++) {
-        TOTAL_LENGTH += dista(pts[i], pts[i+1]);
-    }
-    currentLength = 0;
-
-    var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
-    for (var i = 0; i < pts.length - 2; i += 1) {
-        cps = cps.concat(
-            ctlpts(
-                pts[i],
-                pts[i + 1],
-                pts[i + 2],
-            )
-        );
-    }
-
-    if (shots.length == 2) {
-        xExpression = linear(xExpression, 0, DURATION_SECONDS * FPS, pts[0].x, pts[1].x);
-        yExpression = linear(yExpression, 0, DURATION_SECONDS * FPS, pts[1].x, pts[1].y);
-    } else {
-        let len = (DURATION_SECONDS * FPS) * dista(pts[0], pts[1]) / TOTAL_LENGTH;
-
-        // From point 0 to point 1 is a quadratic bezier
-        xExpression = quadraticBezier(xExpression, 0, len, pts[0].x, cps[0].x, pts[1].x);
-        yExpression = quadraticBezier(yExpression, 0, len, pts[0].y, cps[0].y, pts[1].y);
-        currentLength += len;
-        // For all middle points, it's cubic beziers
-        for (var i = 2; i < shots.length - 1; i += 1) {
-            len = (DURATION_SECONDS * FPS) * dista(pts[i-1], pts[i]) / TOTAL_LENGTH;
-
-            xExpression = cubicBezier(
-                xExpression,
-                i - 1,
-                len,
-                pts[i-1].x,
-                cps[(2 * (i - 1) - 1)].x,
-                cps[(2 * (i - 1))].x,
-                pts[i].x,
-            );
-            const f = new CubicBezier(pts[i-1], cps[(2 * (i - 1) - 1)],cps[(2 * (i - 1))], pts[i]);
-            console.log(f.length);
-            yExpression = cubicBezier(
-                yExpression,
-                i - 1,
-                len,
-                pts[i-1].y,
-                cps[2 * (i - 1) - 1].y,
-                cps[2 * (i - 1)].y,
-                pts[i].y,
-            );
-            currentLength += len;
-        }
-        // And the final one is a quadratic bezier (unless you're looping, TODO)
-        i = shots.length - 1;
-        len = (DURATION_SECONDS * FPS) * dista(pts[i-1], pts[i]) / TOTAL_LENGTH;
-        xExpression = quadraticBezier(xExpression, i - 1, len, pts[i-1].x, cps[(2 * (i - 1) - 1)].x, pts[i].x);
-        yExpression = quadraticBezier(yExpression, i - 1, len, pts[i-1].y, cps[(2 * (i - 1) - 1)].y, pts[i].y);
-        currentLength += len;
-
-        for (var i = 0; i < shots.length - 2; i++) {
-            xExpression += ')';
-            yExpression += ')';
-        }
-    }
-
-    // Handle the zoom linearly
-    currentLength = 0;
-    for (var i = 0; i < shots.length - 1; i++) {
-        const zoom1 = zoomScalar / parseFloat(shots[i].style.transform.slice(6, -1));
-        const zoom2 = zoomScalar / parseFloat(shots[i + 1].style.transform.slice(6, -1));
-
-        len = (DURATION_SECONDS * FPS) * dista(pts[i], pts[i + 1]) / TOTAL_LENGTH;
-
-        zoomExpression = linear(zoomExpression, i, len, zoom1, zoom2);
-        currentLength += len;
-    }
-    for (var i = 0; i < shots.length - 2; i++) {
-        zoomExpression += ')';
-    }
-
-    command += xExpression + "'";
-    command += yExpression + "'";
-    command += zoomExpression + "'";
-
-    command += '" -t ' + DURATION_SECONDS + ' -pix_fmt yuv420p -y output_video.mp4'; // suffix
-
-    return command;
-}
-
-function linear(expression, i, len, p1, p2) {
-    const t = `((on - ${currentLength}) / ${len})`;
-
-    const linearFunction = `${p1} + ${p2 - p1} * ${t}`;
-
-    if (i == shots.length - 2) {
-        expression += linearFunction;
-    } else {
-        expression += 'if('
-            + 'lte(on, ' + (currentLength + len) + '),'
-            + linearFunction + ',';
-    }
-    return expression;
-}
-
-function quadraticBezier(expression, i, len, p1, c1, p2) {
-    const t = `((on - ${currentLength}) / ${len})`;
-
-    const quadraticBezierFunction = `(1 - ${t})^2 * ${p1} + 2 * (1 - ${t}) * ${t} * ${c1} + ${t}^2 * ${p2}`;
-
-    if (i == shots.length - 2) {
-        expression += quadraticBezierFunction;
-    } else {
-        expression += 'if('
-            + 'lte(on, ' + (currentLength + len) + '),'
-            + quadraticBezierFunction + ',';
-    }
-    return expression;
-}
-
-function cubicBezier(expression, i, len, p1, c1, c2, p2) {
-    const t = `((on - ${currentLength}) / ${len})`;
-
-    const cubicBezierFunction = `(1 - ${t})^3 * ${p1} + 3 * (1 - ${t})^2 * ${t} * ${c1} + 3 * (1 - ${t}) * ${t}^2 * ${c2} + ${t}^3 * ${p2}`;
-
-    if (i == shots.length - 2) {
-        expression += cubicBezierFunction;
-    } else {
-        expression += 'if('
-            + 'lte(on, ' + (currentLength + len) + '),'
-            + cubicBezierFunction + ',';
-    }
-    return expression;
 }
 
 function clearFrames() {
@@ -572,7 +416,7 @@ function ctlpts(one, two, three) {
     var d12 = dista(two, three);
     var d012 = d01 + d12;
     return [
-        new Point(two.x - v.x * t * d01 / d012, two.y- v.y * t * d01 / d012),
+        new Point(two.x - v.x * t * d01 / d012, two.y - v.y * t * d01 / d012),
         new Point(two.x + v.x * t * d12 / d012, two.y + v.y * t * d12 / d012)
     ];
 }
@@ -605,8 +449,8 @@ function drawSplines() {
         cps = cps.concat(
             ctlpts(
                 pts[i],
-                pts[i+1],
-                pts[i+2],
+                pts[i + 1],
+                pts[i + 2],
             )
         );
     }

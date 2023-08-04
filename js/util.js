@@ -27,7 +27,33 @@ function convertDataURIToBinary(dataURI) {
     return array;
 }
 
+function screenshot(image, x, y, width, height) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set the canvas dimensions
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx.drawImage(
+        image,
+        // Source
+        x,
+        y,
+        width,
+        height,
+        // Destination
+        0,
+        0,
+        width,
+        height
+    );
+
+    return canvas.toDataURL('image/jpeg', 1 /* max quality */);
+}
+
 export {
     isNaturalScrolling,
-    convertDataURIToBinary
+    convertDataURIToBinary,
+    screenshot
 }
