@@ -12,6 +12,8 @@ https://fjorge.com/insights/blog/can-bezier-curves-be-quickly-parameterized-by-a
 
 https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-L8
 
+https://github.com/feathericons/feather#license
+
 ## Things to do
 1. Make it so that zooming happens centered on your mouse
 2. Make it so that you can't include white?

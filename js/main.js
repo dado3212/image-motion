@@ -79,6 +79,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeModal').addEventListener('click', (_) => {
         document.getElementById('modal').style.display = "none";
     });
+
+    document.getElementById('addFrame').addEventListener('click', (_) => {
+        // Mark everything as unselected
+        const toolboxOptions = document.querySelectorAll('#toolbox span');
+        for (var i = 0; i < toolboxOptions.length; i++) {
+            toolboxOptions[i].classList.remove('selected');
+        }
+        // Select addFrame
+        document.getElementById('addFrame').classList.add('selected');
+    });
+
+    document.getElementById('moveFrame').addEventListener('click', (_) => {
+        // Mark everything as unselected
+        const toolboxOptions = document.querySelectorAll('#toolbox span');
+        for (var i = 0; i < toolboxOptions.length; i++) {
+            toolboxOptions[i].classList.remove('selected');
+        }
+        // Select addFrame
+        document.getElementById('moveFrame').classList.add('selected');
+    });
 });
 
 function uploadImage(file) {

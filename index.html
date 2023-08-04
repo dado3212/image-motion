@@ -1,41 +1,55 @@
 <html>
-    <head>
-        <title>Image Panner</title>
-        <link rel="stylesheet" type="text/css" href="css/main.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
-        <script type="module" src="js/main.js"></script>
-    </head>
-    <body dropzone>
-        <div>
-            <div id="container">
-                <div id="image">
-                    <canvas id="canvas"></canvas>
-                    <img id="rawImage">
-                </div>
-            </div>
-            <div id="sidebar">
-                <div>
-                    <button id="reset">Reset All</button>
-                    <button id="create">Create</button>
-                    <input type="checkbox" id="loop">
-                    <label for="loop" style="user-select: none;">Loop</label><br>
-                    <input type="number" id="duration" placeholder="10" min="0" max="300" value="10">
-                </div>
-                <div id="frames"></div>
+<head>
+    <title>Image Panner</title>
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+    <script type="module" src="js/main.js"></script>
+</head>
+
+<body dropzone>
+    <div class="main">
+        <div id="toolbox">
+            <span id="addFrame" class="selected" title="Add frames">
+                <svg class="feather">
+                    <use href="assets/feather-sprite.svg#plus-square" />
+                </svg>
+            </span>
+            <span id="moveFrame" title="Move existing frames">
+                <svg class="feather">
+                    <use href="assets/feather-sprite.svg#move" />
+                </svg>
+            </span>
+        </div>
+        <div id="container">
+            <div id="image">
+                <canvas id="canvas"></canvas>
+                <img id="rawImage">
             </div>
         </div>
-        <!-- Used for following the mouse around for frame creation -->
-        <div id="rectangle" class="rectangle" style="display: none;"></div>
-        <!-- Modal when you create a video, showing progress and output -->
-        <div id="modal" style="display: none";>
-            <button id="closeModal">X</button>
-            <div class="progress-container">
-                <div class="progress-bar" id="progressBar"></div>
+        <div id="sidebar">
+            <div>
+                <button id="reset">Reset All</button>
+                <button id="create">Create</button>
+                <input type="checkbox" id="loop">
+                <label for="loop" style="user-select: none;">Loop</label><br>
+                <input type="number" id="duration" placeholder="10" min="0" max="300" value="10">
             </div>
-            <div id="progressMessage"></div>
-            <div id="outputVideo"></div>
+            <div id="frames"></div>
         </div>
-    </body>
+    </div>
+    <!-- Used for following the mouse around for frame creation -->
+    <div id="rectangle" class="rectangle" style="display: none;"></div>
+    <!-- Modal when you create a video, showing progress and output -->
+    <div id="modal" style="display: none" ;>
+        <button id="closeModal">X</button>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="progressMessage"></div>
+        <div id="outputVideo"></div>
+    </div>
+</body>
 
 </html>
