@@ -45,7 +45,7 @@ let currentTool = Tools.ADD;
 
 // For output
 let DURATION_SECONDS = 10;
-const FPS = 30;
+const FPS = 60;
 
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;

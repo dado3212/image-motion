@@ -106,7 +106,7 @@ self.onmessage = async function(event) {
             "-r", '' + event.data.fps, // frame rate
             "-i", "img%04d.jpeg", // input files
             "-c:v", "libx264", // video codec?
-            "-preset", "ultrafast", //
+            "-preset", "ultrafast", // not exactly sure?
             "-crf", "22", // video quality (0 to 51, 0 is lossless)
             "-vf", "scale=1080:1920", // output scale
             "-pix_fmt", "yuv420p", // pixel format

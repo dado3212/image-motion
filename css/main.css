@@ -121,6 +121,21 @@ body {
     overflow-y: scroll;
 }
 
+#create {
+    display: block;
+    background-color: #3d3d3d;
+    border: 1px solid #ddd;
+    color: #ddd;
+    padding: 10px 40px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+}
+
+#create:hover {
+    background-color: #747474;
+}
+
 #reset {
     position: absolute;
     right: 5px;
