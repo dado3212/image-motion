@@ -12,8 +12,14 @@ import {
 } from './bezier.js'
 
 // Global context
-var shots = [];
-var images = [];
+var shots = [
+    /**
+     * {
+     *  rectangle: div,
+     *  snapshot: div,
+     * }
+     */
+];
 
 var gestureStartScale = 0;
 var scale = 1;
@@ -282,10 +288,15 @@ function setupImageListeners() {
             return;
         }
         // Add a little indicator of where you are
-        addRectangle(event);
+        const newRectangle = addRectangle();
 
         // And take a screenshot of that section of the canvas
-        addScreenshot(event);
+        const newSnapshot = addScreenshot(newRectangle, shots.length);
+
+        shots.push({
+            rectangle: newRectangle,
+            snapshot: newSnapshot,
+        })
 
         drawSplines();
     });
@@ -330,12 +341,12 @@ function activate(event) {
     container.addEventListener('pointerleave', end, false);
 }
 
-function addRectangle(event) {
+function addRectangle() {
     const originalElement = document.getElementById('rectangle');
     const newRectangle = originalElement.cloneNode(true);
 
-    // Optionally, you can modify the cloned element's attributes or content
-    newRectangle.id = 'rectangle_' + shots.length;
+    // Clear the unique ID
+    newRectangle.id = '';
 
     // Insert the cloned element into the document (e.g., append it to a container)
     document.getElementById('image').appendChild(newRectangle);
@@ -358,19 +369,19 @@ function addRectangle(event) {
     span.innerHTML = (shots.length + 1)
     newRectangle.appendChild(span);
 
-    shots.push(newRectangle);
+    return newRectangle;
 }
 
-function addScreenshot(event) {
+function addScreenshot(rectangle) {
     // Get the last element that was added, and the x, y
-    const newestRectangle = shots[shots.length - 1].getBoundingClientRect();
+    const rectangleBounds = rectangle.getBoundingClientRect();
     const rawImage = document.getElementById('rawImage');
     const imageBounding = rawImage.getBoundingClientRect();
 
-    const x = parseInt(shots[shots.length - 1].style.left.slice(0, -2)) / imageBounding.width * scale * originalWidth;
-    const y = parseInt(shots[shots.length - 1].style.top.slice(0, -2)) / imageBounding.height * scale * originalHeight;
-    const width = newestRectangle.width / imageBounding.width * originalWidth;
-    const height = newestRectangle.height / imageBounding.height * originalHeight;
+    const x = parseInt(rectangle.style.left.slice(0, -2)) / imageBounding.width * scale * originalWidth;
+    const y = parseInt(rectangle.style.top.slice(0, -2)) / imageBounding.height * scale * originalHeight;
+    const width = rectangleBounds.width / imageBounding.width * originalWidth;
+    const height = rectangleBounds.height / imageBounding.height * originalHeight;
 
     const imgString = screenshot(rawImage, x, y, width, height);
 
@@ -385,7 +396,7 @@ function addScreenshot(event) {
 
     // A title for the frame
     const newSpan = document.createElement('span');
-    newSpan.innerHTML = 'Frame ' + shots.length;
+    newSpan.innerHTML = 'Frame ' + (shots.length + 1);
     newDiv.appendChild(newSpan);
 
     // And a removal button
@@ -398,15 +409,46 @@ function addScreenshot(event) {
     newDiv.appendChild(removeButton);
 
     document.getElementById('frames').appendChild(newDiv);
+
+    return newDiv;
 }
 
 function removeFrameClick(evt) {
     // Get the frame you clicked on
-    console.log(evt.target.parentNode.parentNode);
+    let selectedSnapshot;
+    if (evt.target.nodeName == 'use') {
+        selectedSnapshot = evt.target.parentNode.parentNode;
+    } else {
+        selectedSnapshot = evt.target.parentNode;
+    }
+
     // Get the index
+    let allSnapshots = document.querySelectorAll('.snapshot');
+    for (var i = 0; i < allSnapshots.length; i++) {
+        if (allSnapshots[i] == selectedSnapshot) {
+            break;
+        }
+    }
+
+    // Remove the rectangle
+    shots[i].rectangle.remove();
+
+    // Remove the frame
+    shots[i].snapshot.remove();
+
     // Remove it from shots
-    // Remove it from the rectangles
-    // Reflow everything
+    const newShots = [].concat(shots.slice(0, i), shots.slice(i+1));
+    shots = newShots;
+
+    // Adjust the names of the remaining rectangles
+    for (var i = 0; i < shots.length; i++) {
+        shots[i].rectangle.firstChild.innerHTML = '' + (i + 1);
+        shots[i].snapshot.children[1].innerHTML = 'Frame ' + (i + 1);
+    }
+
+    // Adjust the names of the remaining frames
+
+    drawSplines();
 }
 
 function progressUpdate(perc, message) {
@@ -446,9 +488,9 @@ function createClick(event) {
     progressUpdate(1, 'Creating frames...');
 
     for (var i = 0; i < shots.length; i++) {
-        const x1 = parseInt(shots[i].style.left.slice(0, -2)) * offsetScale;
-        const y1 = parseInt(shots[i].style.top.slice(0, -2)) * offsetScale;
-        const scalar = parseFloat(shots[i].style.transform.slice(6, -1));
+        const x1 = parseInt(shots[i].rectangle.style.left.slice(0, -2)) * offsetScale;
+        const y1 = parseInt(shots[i].rectangle.style.top.slice(0, -2)) * offsetScale;
+        const scalar = parseFloat(shots[i].rectangle.style.transform.slice(6, -1));
         const dims = dimensionScaling(scalar);
         pts.push(new Frame(x1, y1, dims[0], dims[1]));
     }
@@ -528,15 +570,10 @@ function createClick(event) {
 
 function clearFrames() {
     for (var i = 0; i < shots.length; i++) {
-        shots[i].remove();
+        shots[i].rectangle.remove();
+        shots[i].snapshot.remove();
     }
     shots = [];
-    var toRemove = document.querySelectorAll('.snapshot');
-    for (var i = 0; i < toRemove.length; i++) {
-        toRemove[i].remove();
-    }
-
-    images = [];
 
     // Clear the splines
     clear();
@@ -571,8 +608,8 @@ let pts = [];
 
 function addPts(pts, i) {
     // Adjust the points to the center
-    const x = parseInt(shots[i].style.left.slice(0, -2)) + rectangleWidth * parseFloat(shots[i].style.transform.slice(6, -1)) / 2;
-    const y = parseInt(shots[i].style.top.slice(0, -2)) + rectangleHeight * parseFloat(shots[i].style.transform.slice(6, -1)) / 2;
+    const x = parseInt(shots[i].rectangle.style.left.slice(0, -2)) + rectangleWidth * parseFloat(shots[i].rectangle.style.transform.slice(6, -1)) / 2;
+    const y = parseInt(shots[i].rectangle.style.top.slice(0, -2)) + rectangleHeight * parseFloat(shots[i].rectangle.style.transform.slice(6, -1)) / 2;
     pts.push(new Point(x, y));
     return pts;
 }

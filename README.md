@@ -26,6 +26,7 @@ https://github.com/feathericons/feather#license
 * Adjust the min zoom?
 * Make it so that you can delete a frame?
 * Make it so that you can linger in some places for longer.
+* Fix the overlapped frames
 
 ## Known bugs
 1. When you move a frame, the layer preview doesn't update
