@@ -35,6 +35,7 @@ let originalHeight = 0;
 let file_name = '';
 
 var canvas, ctx;
+let worker;
 
 const Tools = {
     ADD: 'Add',
@@ -102,6 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal
     document.getElementById('closeModal').addEventListener('click', (_) => {
         document.getElementById('modal').style.display = "none";
+
+        if (worker != null) {
+            worker.terminate();
+        }
     });
 
     document.getElementById('addFrame').addEventListener('click', (_) => {
@@ -466,7 +471,7 @@ function createClick(event) {
 
     if (offscreenCanvas.transferControlToOffscreen) {
         offscreenCanvas = offscreenCanvas.transferControlToOffscreen();
-        const worker = new Worker('./js/create-video-worker.js', { type: "module" });
+        worker = new Worker('./js/create-video-worker.js', { type: "module" });
         worker.onmessage = function (event) {
             progressUpdate(event.data.progress, event.data.message);
             if (event.data.videoBlob) {
