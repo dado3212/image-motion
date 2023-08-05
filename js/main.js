@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Make the rectangle visible
         document.getElementById('rectangle').style.display = "initial";
+        // Mark all frames as non-moveable
+        const rectangleFrames = document.querySelectorAll('.rectangle.frame');
+        for (var i = 0; i < rectangleFrames.length; i++) {
+            rectangleFrames[i].classList.remove('moveable');
+        }
     });
 
     document.getElementById('moveFrame').addEventListener('click', (_) => {
@@ -109,8 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Select moveFrame
         document.getElementById('moveFrame').classList.add('selected');
         currentTool = Tools.MOVE;
-
+        // Hide the rectangle that follows the mouse
         document.getElementById('rectangle').style.display = "none";
+        // Mark all frames as moveable
+        const rectangleFrames = document.querySelectorAll('.rectangle.frame');
+        for (var i = 0; i < rectangleFrames.length; i++) {
+            rectangleFrames[i].classList.add('moveable');
+        }
     });
 });
 
@@ -236,6 +246,8 @@ function setupImageListeners() {
 
 
     document.getElementById('container').addEventListener('click', function (event) {
+        console.log(event);
+        console.log(event.target);
         if (currentTool !== Tools.ADD) {
             return;
         }
@@ -249,8 +261,44 @@ function setupImageListeners() {
     });
 }
 
-// Drag and drop
-function
+// Drag and drop code
+let clickStartX, clickStartY;
+let rectangleStartX, rectangleStartY;
+let movingRectangle;
+
+function move(e) {
+    movingRectangle.style.left = rectangleStartX + (e.clientX - clickStartX) + 'px';
+    movingRectangle.style.top = rectangleStartY + (e.clientY - clickStartY) + 'px';
+
+    drawSplines();
+}
+
+function end() {
+    container.removeEventListener('pointermove', move);
+    container.removeEventListener('pointerup', end);
+    container.removeEventListener('pointerleave', end);
+}
+
+function activate(event) {
+    if (currentTool !== Tools.MOVE) {
+        return;
+    }
+    if (event.target.classList.contains('rectangle') && event.target.classList.contains('frame')) {
+        movingRectangle = event.target;
+    } else {
+        movingRectangle = event.target.parentNode;
+    }
+
+    clickStartX = event.clientX;
+    clickStartY = event.clientY;
+
+    rectangleStartX = parseInt(movingRectangle.style.left.slice(0, -2));
+    rectangleStartY = parseInt(movingRectangle.style.top.slice(0, -2));
+
+    container.addEventListener('pointermove', move, false);
+    container.addEventListener('pointerup', end, false);
+    container.addEventListener('pointerleave', end, false);
+}
 
 function addRectangle(event) {
     const originalElement = document.getElementById('rectangle');
@@ -271,8 +319,10 @@ function addRectangle(event) {
     newRectangle.style.left = x + 'px';
     newRectangle.style.top = y + 'px';
     newRectangle.style.transform = `scale(${1 / scale})`;
+    newRectangle.classList.add('frame');
 
-    newRectangle.draggable = true;
+    // newRectangle.draggable = true;
+    newRectangle.addEventListener('pointerdown', activate, false);
 
     const span = document.createElement('span');
     span.innerHTML = (shots.length + 1)

@@ -39,6 +39,11 @@
     left: calc(50% - 32.5px);
 }
 
+.rectangle.frame.moveable {
+    pointer-events: auto; /* Enable pointer events */
+    cursor: grab;
+}
+
 body {
     margin: 0;
     overscroll-behavior-x: none;
