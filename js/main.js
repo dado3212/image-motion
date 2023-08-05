@@ -78,6 +78,21 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadImage(file);
     });
 
+    document.getElementById('container').addEventListener('mousemove', function (event) {
+        if (currentTool !== Tools.ADD) {
+            return;
+        }
+        var rectangle = document.getElementById('rectangle');
+
+        // Calculate the new position of the rectangle based on the cursor position
+        var x = event.clientX - (rectangleWidth / 2);
+        var y = event.clientY - (rectangleHeight / 2);
+
+        // Set the new position for the rectangle
+        rectangle.style.left = x + 'px';
+        rectangle.style.top = y + 'px';
+    });
+
     document.getElementById('reset').addEventListener('click', clearFrames);
     document.getElementById('create').addEventListener('click', createClick);
 
@@ -180,21 +195,6 @@ function uploadImage(file) {
 //
 function setupImageListeners() {
     const naturalScroll = isNaturalScrolling();
-
-    document.getElementById('container').addEventListener('mousemove', function (event) {
-        if (currentTool !== Tools.ADD) {
-            return;
-        }
-        var rectangle = document.getElementById('rectangle');
-
-        // Calculate the new position of the rectangle based on the cursor position
-        var x = event.clientX - (rectangleWidth / 2);
-        var y = event.clientY - (rectangleHeight / 2);
-
-        // Set the new position for the rectangle
-        rectangle.style.left = x + 'px';
-        rectangle.style.top = y + 'px';
-    });
 
     // Detect the wheel event (including the trackpad pinch gesture)
     document.getElementById('container').addEventListener('wheel', function (e) {
