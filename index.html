@@ -30,13 +30,20 @@
         </div>
         <div id="sidebar">
             <div>
-                <button id="reset">Reset All</button>
                 <button id="create">Create</button>
                 <input type="checkbox" id="loop">
                 <label for="loop" style="user-select: none;">Loop</label><br>
                 <input type="number" id="duration" placeholder="10" min="0" max="300" value="10">
             </div>
-            <div id="frames"></div>
+            <section class="section">
+                <div class="title">Frames</div>
+                <svg class="feather" id="reset" title="Delete all frames">
+                    <use href="assets/feather-sprite.svg#trash-2" />
+                </svg>
+                <div id="frames">
+
+                </div>
+            </section>
         </div>
     </div>
     <!-- Used for following the mouse around for frame creation -->

@@ -48,6 +48,9 @@
 body {
     margin: 0;
     overscroll-behavior-x: none;
+
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu;
+    color: #ddd;
 }
 
 .main {
@@ -76,7 +79,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    color: #ddd;
     margin: 3px 7px;
 
     cursor: pointer;
@@ -99,7 +101,7 @@ body {
 
 #sidebar {
     width: 350px;
-    background-color: #525252;
+    background-color: #3d3d3d;
 
     z-index: 3;
 
@@ -107,16 +109,36 @@ body {
     flex-direction: column;
 }
 
-#image {
-    position: absolute;
-    top: 0;
-    left: 0;
+#sidebar section {
+    flex-grow: 1;
+    background-color: #3d3d3d;
+    margin: 5px;
 
-    transform-origin: top left;
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#reset {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+}
+
+.title {
+    background-color: #525252;
+    padding: 10px 20px;
+    margin-right: auto;
+
+    user-select: none;
 }
 
 #frames {
     overflow-y: scroll;
+    border: 5px solid #525252;
+    flex-grow: 1;
 }
 
 .snapshot {
@@ -135,6 +157,14 @@ body {
 
 .snapshot img {
     height: 130px;
+}
+
+#image {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    transform-origin: top left;
 }
 
 #canvas {

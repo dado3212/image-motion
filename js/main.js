@@ -526,7 +526,9 @@ function clearFrames() {
  * Copied directly from https://stackoverflow.com/a/20309900/3951475
  */
 function clear() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (canvas && ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 }
 
 function dista(p_i, p_j) {
