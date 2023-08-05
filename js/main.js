@@ -374,19 +374,39 @@ function addScreenshot(event) {
 
     const imgString = screenshot(rawImage, x, y, width, height);
 
-    // Convert the canvas to an image
-    const image = new Image();
-    image.src = imgString;
-
+    // Create the new element
     const newDiv = document.createElement('div');
     newDiv.classList.add('snapshot');
 
-    const newSpan = document.createElement('span');
-    newSpan.innerHTML = shots.length;
-
-    newDiv.appendChild(newSpan);
+    // Convert the canvas to an image and add it
+    const image = new Image();
+    image.src = imgString;
     newDiv.appendChild(image);
+
+    // A title for the frame
+    const newSpan = document.createElement('span');
+    newSpan.innerHTML = 'Frame ' + shots.length;
+    newDiv.appendChild(newSpan);
+
+    // And a removal button
+    const removeButton = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    removeButton.classList.add('feather', 'clickable');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'assets/feather-sprite.svg#x');
+    removeButton.appendChild(use);
+    removeButton.addEventListener('click', removeFrameClick);
+    newDiv.appendChild(removeButton);
+
     document.getElementById('frames').appendChild(newDiv);
+}
+
+function removeFrameClick(evt) {
+    // Get the frame you clicked on
+    console.log(evt.target.parentNode.parentNode);
+    // Get the index
+    // Remove it from shots
+    // Remove it from the rectangles
+    // Reflow everything
 }
 
 function progressUpdate(perc, message) {

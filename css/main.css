@@ -118,6 +118,7 @@ body {
 
     display: flex;
     flex-direction: column;
+    overflow-y: scroll;
 }
 
 #reset {
@@ -142,21 +143,32 @@ body {
 }
 
 .snapshot {
-    height: 130px;
+    height: 70px;
     display: flex;
     align-items: center;
     border: 1px solid #00000047;
-    margin: 5px;
+    margin: 5px 5px 0 5px;
+    padding: 5px;
+
+    background-color: #525252;
 }
 
-.snapshot span {
-    font-size: 3em;
-    padding: 10px;
-    font-family: sans-serif;
+.snapshot:last-of-type {
+    margin-bottom: 5px;
 }
 
 .snapshot img {
-    height: 130px;
+    height: 100%;
+}
+
+.snapshot span {
+    padding: 10px;
+    font-family: sans-serif;
+    flex-grow: 1;
+}
+
+.clickable {
+    cursor: pointer;
 }
 
 #image {
