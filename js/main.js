@@ -259,8 +259,6 @@ function setupImageListeners() {
 
 
     document.getElementById('container').addEventListener('click', function (event) {
-        console.log(event);
-        console.log(event.target);
         if (currentTool !== Tools.ADD) {
             return;
         }
@@ -381,7 +379,8 @@ function createClick(event) {
     event.stopPropagation();
 
     // Trigger the modal, clear the old video output
-    document.getElementById('outputVideo').innerHTML = '';
+    document.getElementById('outputVideo').innerHTML = '<svg class="feather"><use href="assets/feather-sprite.svg#video" /></svg>';
+    document.getElementById('outputVideo').classList.add('loading');
     document.getElementById('modal').style.display = "initial";
     progressUpdate(0, 'Starting...');
 
@@ -460,13 +459,13 @@ function createClick(event) {
                 const url = webkitURL.createObjectURL(event.data.videoBlob);
 
                 const video = document.createElement('video');
-                video.width = 1080;
-                video.height = 1920;
                 video.controls = true;
                 video.autoplay = true;
                 video.loop = true;
                 video.src = url;
 
+                document.getElementById('outputVideo').classList.remove('loading');
+                document.getElementById('outputVideo').innerHTML = '';
                 document.getElementById('outputVideo').appendChild(video);
             }
         };

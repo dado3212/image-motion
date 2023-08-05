@@ -27,7 +27,6 @@
                 <canvas id="canvas"></canvas>
                 <img id="rawImage">
             </div>
-            <div id="helperDot"></div>
         </div>
         <div id="sidebar">
             <div>
@@ -43,13 +42,22 @@
     <!-- Used for following the mouse around for frame creation -->
     <div id="rectangle" class="rectangle" style="display: none;"></div>
     <!-- Modal when you create a video, showing progress and output -->
-    <div id="modal" style="display: none" ;>
-        <button id="closeModal">X</button>
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
+    <div id="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div id="outputVideo"></div>
+            <div class="modal-sidebar">
+                <span id="closeModal">
+                    <svg class="feather" style="width: 40px; height: 40px;">
+                        <use href="assets/feather-sprite.svg#x" />
+                    </svg>
+                </span>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="progressMessage"></div>
+            </div>
         </div>
-        <div id="progressMessage"></div>
-        <div id="outputVideo"></div>
     </div>
 </body>
 

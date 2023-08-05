@@ -19,6 +19,7 @@ https://github.com/feathericons/feather#license
 * Hover/highlight/help text on where to drop.
 * Proper image handling of different filetypes.
 * Proper error message handling in the modal.
+* Improve text of the modal
 * Fix the loop button.
 * Make it so that you can't select white.
 * Make it so that you can see the full path that it will follow?

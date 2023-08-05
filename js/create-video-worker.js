@@ -11,7 +11,6 @@ import {
 } from './util.js'
 
 self.onmessage = async function(event) {
-    console.log(event);
     const offscreenCanvas = event.data.canvas;
     const paths = deserialize(event.data.paths);
     const offscreenContext = offscreenCanvas.getContext('2d');
@@ -55,7 +54,6 @@ self.onmessage = async function(event) {
 
     worker.onmessage = function (e) {
         var msg = e.data;
-        console.log(msg);
         if (msg.type == 'stderr' || msg.type == 'stdout') {
             let perc = 51;
             const regex = /frame=\s*(\d+)/;
@@ -90,9 +88,12 @@ self.onmessage = async function(event) {
         }
     };
 
-    worker.onerror = function(event) {
-        console.log('error');
-        console.log(event);
+    worker.onerror = function(_) {
+        self.postMessage({
+            progress: 100,
+            message: 'Worker failed.',
+            error: true,
+        });
     };
 
     // https://trac.ffmpeg.org/wiki/Slideshow

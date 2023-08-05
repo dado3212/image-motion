@@ -40,18 +40,9 @@
 }
 
 .rectangle.frame.moveable {
-    pointer-events: auto; /* Enable pointer events */
+    pointer-events: auto;
+    /* Enable pointer events */
     cursor: grab;
-}
-
-#helperDot {
-    width:8px;
-    height:8px;
-    border-radius:4px;
-    background-color:red;
-
-    z-index: 10;
-    position: absolute;
 }
 
 body {
@@ -154,20 +145,48 @@ body {
 
 /* Modal */
 #modal {
+    display: initial;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    position: absolute;
+
+    z-index: 4;
+}
+
+.modal-overlay {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
     position: absolute;
     top: 10%;
-    left: calc(50% - 400px);
-    width: 800px;
+    left: calc(50% - 325px);
+    width: 650px;
     height: 80%;
     border-radius: 10px;
     padding: 10px;
-    background-color: #0000006e;
+    background-color: #525252;
     z-index: 4;
+
+    box-shadow: 0px 0px 10px 0px #292929;
+
+    display: flex;
+}
+
+.modal-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    margin: 0 0 0 10px;
 }
 
 .progress-container {
     width: 100%;
-    background-color: #f0f0f0;
+    background-color: #ddd;
     height: 20px;
     border-radius: 10px;
     margin-top: 20px;
@@ -176,7 +195,7 @@ body {
 .progress-bar {
     height: 100%;
     width: 0;
-    background-color: #4caf50;
+    background-color: #2e9ef7;
     border-radius: 10px;
     transition: width 0.3s;
 }
@@ -185,8 +204,29 @@ body {
     color: white;
 }
 
+#outputVideo {
+    height: 100%;
+    aspect-ratio: 9/16;
+}
+
+#outputVideo .feather {
+    color: #ddd;
+    width: 100px;
+    height: 100px;
+}
+
+#outputVideo.loading {
+    border: 5px dashed #ddd;
+    box-sizing: border-box;
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 #outputVideo video {
-    height: 615px;
+    height: 100%;
     width: 100%;
 }
 
@@ -198,4 +238,10 @@ body {
     stroke-linecap: round;
     stroke-linejoin: round;
     fill: none;
-  }
+}
+
+#closeModal {
+    color: #ddd;
+    margin-left: auto;
+    cursor: pointer;
+}
