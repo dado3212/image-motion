@@ -380,7 +380,8 @@ function progressUpdate(perc, message) {
 function createClick(event) {
     event.stopPropagation();
 
-    // Trigger the modal
+    // Trigger the modal, clear the old video output
+    document.getElementById('outputVideo').innerHTML = '';
     document.getElementById('modal').style.display = "initial";
     progressUpdate(0, 'Starting...');
 
@@ -466,7 +467,6 @@ function createClick(event) {
                 video.loop = true;
                 video.src = url;
 
-                document.getElementById('outputVideo').innerHTML = '';
                 document.getElementById('outputVideo').appendChild(video);
             }
         };

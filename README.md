@@ -15,17 +15,16 @@ https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-
 https://github.com/feathericons/feather#license
 
 ## Things to do
-3. Clear the window modal properly.
-4. UI pass.
-5. Hover/highlight/help text on where to drop.
-6. Proper image handling of different filetypes.
-7. Proper error message handling in the modal.
-8. Fix the loop button.
-9. Make it so that you can't select white.
-10. Make it so that you can see the full path that it will follow?
-11. Adjust the min zoom?
-12. Make it so that you can delete a frame?
-14. Make it so that you can linger in some places for longer.
+* UI pass.
+* Hover/highlight/help text on where to drop.
+* Proper image handling of different filetypes.
+* Proper error message handling in the modal.
+* Fix the loop button.
+* Make it so that you can't select white.
+* Make it so that you can see the full path that it will follow?
+* Adjust the min zoom?
+* Make it so that you can delete a frame?
+* Make it so that you can linger in some places for longer.
 
 ## Known bugs
 1. When you move a frame, the layer preview doesn't update
