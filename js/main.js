@@ -49,6 +49,9 @@ const FPS = 30;
 document.addEventListener('DOMContentLoaded', () => {
     var body = document.body;
 
+    document.getElementById('rectangle').style.width = rectangleWidth + 'px';
+    document.getElementById('rectangle').style.height = rectangleHeight + 'px';
+
     // Prevent default behavior for the dragover and drop events to allow dropping content
     body.addEventListener('dragover', function (evt) {
         evt.preventDefault();
@@ -158,7 +161,7 @@ function uploadImage(file) {
             // Scale the image and set the URL
             originalWidth = rawImage.width;
             originalHeight = rawImage.height;
-            const tabHeight = window.innerHeight - 15;
+            const tabHeight = window.innerHeight;
             const tabWidth = window.innerWidth;
 
             rawImage.width = tabHeight * originalWidth / originalHeight;
@@ -179,8 +182,6 @@ function uploadImage(file) {
 
             // Set up the rectangle
             document.getElementById('rectangle').style.display = "initial";
-            document.getElementById('rectangle').style.width = rectangleWidth + 'px';
-            document.getElementById('rectangle').style.height = rectangleHeight + 'px';
 
             // Set up all the additional listeners
             setupImageListeners();
@@ -195,6 +196,19 @@ function uploadImage(file) {
 //
 function setupImageListeners() {
     const naturalScroll = isNaturalScrolling();
+
+    document.getElementById('container').addEventListener('mouseleave', (_) => {
+        if (currentTool !== Tools.ADD) {
+            return;
+        }
+        document.getElementById('rectangle').style.display = "none";
+    });
+    document.getElementById('container').addEventListener('mouseenter', (_) => {
+        if (currentTool !== Tools.ADD) {
+            return;
+        }
+        document.getElementById('rectangle').style.display = "initial";
+    });
 
     // Detect the wheel event (including the trackpad pinch gesture)
     document.getElementById('container').addEventListener('wheel', function (e) {
