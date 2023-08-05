@@ -15,8 +15,6 @@ https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-
 https://github.com/feathericons/feather#license
 
 ## Things to do
-1. Make it so that zooming happens centered on your mouse
-2. Make it so that you can't include white?
 3. Clear the window modal properly.
 4. UI pass.
 5. Hover/highlight/help text on where to drop.
@@ -27,8 +25,10 @@ https://github.com/feathericons/feather#license
 10. Make it so that you can see the full path that it will follow?
 11. Adjust the min zoom?
 12. Make it so that you can delete a frame?
-13. Make it so that you can adjust a frame?
 14. Make it so that you can linger in some places for longer.
+
+## Known bugs
+1. When you move a frame, the layer preview doesn't update
 
 ## Author's Note
 If you're interested in programatically following bezier curves with ffmpeg's `zoompan`, I used to have this functionality until I ran into an inability to reparametize the curves by arc-length for smooth camera moves, and swapped to a fully in-browser solution. The relevant code is working around `62379f45044fd8b7254680064ad89b1367d3c420` or `9cdc77ba912cbb9914bdb120afd2f9cbf168a77e`.

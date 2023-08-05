@@ -158,8 +158,9 @@ function uploadImage(file) {
             canvas.width = rawImage.width;
             canvas.height = rawImage.height;
 
-            let offsetX = (tabWidth - 350 - rawImage.width) / 2;
+            const offsetX = (tabWidth - 350 - rawImage.width) / 2;
             document.getElementById('image').style.transform = `translate(${offsetX}px, 0px)`;
+            posX = offsetX;
 
             // Set up the rectangle
             document.getElementById('rectangle').style.display = "initial";
@@ -206,7 +207,19 @@ function setupImageListeners() {
             // Limit the scaling from fully zoomed out to 10x
             newScale = Math.max(minScale, Math.min(newScale, maxScale));
 
-            // Update the current scale for the next wheel event
+            const container = document.getElementById('container').getBoundingClientRect();
+
+            // This is where the mouse currently is (relative to the container)
+            const targetX = e.clientX - container.left;
+            const targetY = e.clientY - container.top;
+
+            const currGapX = targetX - posX;
+            const currGapY = targetY - posY;
+
+            // This only works if the transform origin is in the top left
+            posX = posX + currGapX - currGapX * (newScale / scale);
+            posY = posY + currGapY - currGapY * (newScale / scale);
+
             scale = newScale;
         } else {
             // Pan mode

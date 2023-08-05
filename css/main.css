@@ -44,6 +44,16 @@
     cursor: grab;
 }
 
+#helperDot {
+    width:8px;
+    height:8px;
+    border-radius:4px;
+    background-color:red;
+
+    z-index: 10;
+    position: absolute;
+}
+
 body {
     margin: 0;
     overscroll-behavior-x: none;
@@ -111,7 +121,7 @@ body {
     top: 0;
     left: 0;
 
-    transition: 'transform 0.3s ease-in-out';
+    transform-origin: top left;
 }
 
 #frames {
