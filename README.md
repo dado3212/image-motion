@@ -16,7 +16,6 @@ https://github.com/feathericons/feather#license
 
 ## Things to do
 * Show errors properly in modal
-* UI of options
 * Hover/highlight/help text on where to drop.
 * Proper image handling of different filetypes.
 * Make it so that you can't select white.

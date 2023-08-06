@@ -121,6 +121,15 @@ body {
     overflow-y: scroll;
 }
 
+#sidebar input {
+    margin: 10px 0 0 0;
+}
+
+#sidebar label {
+    user-select: none;
+    margin-left: 10px;
+}
+
 #create {
     display: block;
     background-color: #3d3d3d;
@@ -129,6 +138,7 @@ body {
     padding: 10px 40px;
     border-radius: 20px;
     cursor: pointer;
+    margin: 10px auto;
     transition: all 0.1s ease-in-out;
 }
 
