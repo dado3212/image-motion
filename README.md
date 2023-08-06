@@ -15,12 +15,13 @@ https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-
 https://github.com/feathericons/feather#license
 
 ## Things to do
-* UI pass.
+* Modal fix
+  * UI pass
+  * Split up the loading screens
+  * Show errors properly
+* UI of options
 * Hover/highlight/help text on where to drop.
 * Proper image handling of different filetypes.
-* Proper error message handling in the modal.
-* Improve text of the modal
-* Fix the loop button.
 * Make it so that you can't select white.
 * Make it so that you can see the full path that it will follow?
 * Make it so that you can linger in some places for longer.
