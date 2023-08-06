@@ -105,6 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('reset').addEventListener('click', clearFrames);
     document.getElementById('create').addEventListener('click', createClick);
+    document.getElementById('loop').addEventListener('click', (_) => {
+        if (canvas && ctx) {
+            drawSplines();
+        }
+    });
 
     // Modal
     document.getElementById('closeModal').addEventListener('click', (_) => {
@@ -456,7 +461,7 @@ function removeFrameClick(evt) {
     shots[i].snapshot.remove();
 
     // Remove it from shots
-    const newShots = [].concat(shots.slice(0, i), shots.slice(i+1));
+    const newShots = [].concat(shots.slice(0, i), shots.slice(i + 1));
     shots = newShots;
 
     // Adjust the names of the remaining rectangles
@@ -466,7 +471,6 @@ function removeFrameClick(evt) {
     }
 
     // Adjust the names of the remaining frames
-
     drawSplines();
 }
 
@@ -638,9 +642,19 @@ function drawSplines() {
         pts = addPts(pts, i);
     }
 
-    if (document.getElementById('loop').checked && shots.length > 2) {
+    const loop = document.getElementById('loop').checked && shots.length > 2;
+
+    if (loop) {
+        // To get every segment to be a cubic bezier we
+        // 1) add the first point again (so that it loops)
+        // 2) add the second point again (so that the loop path is cubic)
+        // 3) add the third point again (so that we have a version of the
+        //    first path that's cubic instead of quadratic)
+
+        // When it comes time to actually build the paths we'll remove these
         pts = addPts(pts, 0);
-        // pts = addPts(pts, 1);
+        pts = addPts(pts, 1);
+        pts = addPts(pts, 2);
     }
 
     var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
@@ -654,10 +668,19 @@ function drawSplines() {
         );
     }
 
-    drawCurvedPath(cps, pts);
+    if (loop) {
+        // Remove the 2 duplicate points (still need 1 to make it loop :D)
+        pts = pts.slice(0, -2);
+        // Rearrange this so that it starts with the second control point of p1
+        // goes through every other cp just once, and ends on the first control
+        // point of p1
+        cps = [].concat(cps.slice(-3, -2), cps.slice(0, -3));
+    }
+
+    drawCurvedPath(cps, pts, loop);
 }
 
-function drawCurvedPath(cps, pts) {
+function drawCurvedPath(cps, pts, loop) {
     ctx.lineWidth = 8;
     ctx.strokeStyle = '#029bd2';
 
@@ -667,8 +690,17 @@ function drawCurvedPath(cps, pts) {
         ctx.moveTo(pts[0].x, pts[0].y);
         ctx.lineTo(pts[1].x, pts[1].y);
         ctx.stroke();
-    }
-    else {
+    } else if (loop) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (var i = 1; i < pts.length; i++) {
+            ctx.bezierCurveTo(
+                cps[2 * (i-1)].x, cps[2 * (i-1)].y,
+                cps[2 * (i-1) + 1].x, cps[2 * (i-1) + 1].y,
+                pts[i].x, pts[i].y);
+        }
+        ctx.stroke();
+    } else {
         ctx.beginPath();
         ctx.moveTo(pts[0].x, pts[0].y);
         // from point 0 to point 1 is a quadratic
