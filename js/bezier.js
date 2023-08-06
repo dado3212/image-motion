@@ -12,6 +12,10 @@ class Frame {
         this.width = width;
         this.height = height;
     }
+
+    clone() {
+        return new Frame(this.x, this.y, this.width, this.height);
+    }
 }
 
 class Path {

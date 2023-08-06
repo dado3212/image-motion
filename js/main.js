@@ -507,6 +507,8 @@ function createClick(event) {
         }
     }
 
+    const loop = document.getElementById('loop').checked && shots.length > 2;
+
     pts = [];
     progressUpdate(1, 'Creating frames...');
 
@@ -516,6 +518,11 @@ function createClick(event) {
         const scalar = parseFloat(shots[i].rectangle.style.transform.slice(6, -1));
         const dims = dimensionScaling(scalar);
         pts.push(new Frame(x1, y1, dims[0], dims[1]));
+    }
+    if (loop) {
+        pts.push(pts[0].clone());
+        pts.push(pts[1].clone());
+        pts.push(pts[2].clone());
     }
     progressUpdate(2, 'Interpolating...');
 
@@ -530,11 +537,20 @@ function createClick(event) {
         );
     }
     progressUpdate(3, 'Populating full paths...');
+    if (loop) {
+        pts = pts.slice(0, -2);
+        cps = [].concat(cps.slice(-3, -2), cps.slice(0, -3));
+    }
 
     // Create all of the paths
     let paths = [];
     if (shots.length == 2) {
         paths.push(new Line(pts[0], pts[1]));
+    } else if (loop) {
+        for (var i = 0; i < shots.length; i++) {
+            paths.push(new CubicBezier(pts[i], cps[2 * i], cps[2*i + 1], pts[i+1]));
+        }
+
     } else {
         // From point 0 to point 1 is a quadratic bezier
         paths.push(new QuadraticBezier(pts[0], cps[0], pts[1]));
