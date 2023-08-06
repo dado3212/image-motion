@@ -235,14 +235,14 @@ function setupImageListeners() {
     document.getElementById('container').addEventListener('wheel', function (e) {
         e.preventDefault();
 
+        const container = document.getElementById('container').getBoundingClientRect();
+
         // Zoom mode
         if (e.ctrlKey) {
             var newScale = scale - e.deltaY * 0.01;
 
             // Limit the scaling from fully zoomed out to 10x
             newScale = Math.max(minScale, Math.min(newScale, maxScale));
-
-            const container = document.getElementById('container').getBoundingClientRect();
 
             // This is where the mouse currently is (relative to the container)
             const targetX = e.clientX - container.left;
@@ -265,6 +265,11 @@ function setupImageListeners() {
                 posX -= (e.deltaX) * 2;
                 posY -= (e.deltaY) * 2;
             }
+            const rawImage = document.getElementById('rawImage').getBoundingClientRect();
+
+            // Make sure that the image doesn't go out of bounds
+            posX = Math.min(Math.max(posX, -1 * rawImage.width + 5), container.width - 5);
+            posY = Math.min(Math.max(posY, -1 * rawImage.height + 5), container.height - 5);
         }
         document.getElementById('image').style.transform = `translate3D(${posX}px, ${posY}px, 0px) scale(${scale})`;
         // Keep the rectangles in the same place
