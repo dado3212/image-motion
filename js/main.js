@@ -184,7 +184,7 @@ function uploadImage(file) {
             rawImage.height = tabHeight;
 
             minScale = Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
-            maxScale = 10 * Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
+            maxScale = 15 * Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
 
             // Set up the canvas
             canvas = document.getElementById('canvas');

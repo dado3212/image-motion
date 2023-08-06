@@ -23,12 +23,12 @@ https://github.com/feathericons/feather#license
 * Fix the loop button.
 * Make it so that you can't select white.
 * Make it so that you can see the full path that it will follow?
-* Adjust the min zoom?
 * Make it so that you can linger in some places for longer.
 * Fix the overlapped frames
 
 ## Known bugs
 1. When you move a frame, the layer preview doesn't update
+2. Only allows you to zoom in to 15x. Which is probably fine, but is adjustable.
 
 ## Author's Note
 If you're interested in programatically following bezier curves with ffmpeg's `zoompan`, I used to have this functionality until I ran into an inability to reparametize the curves by arc-length for smooth camera moves, and swapped to a fully in-browser solution. The relevant code is working around `62379f45044fd8b7254680064ad89b1367d3c420` or `9cdc77ba912cbb9914bdb120afd2f9cbf168a77e`.
