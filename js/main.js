@@ -479,9 +479,33 @@ function removeFrameClick(evt) {
     drawSplines();
 }
 
-function progressUpdate(perc, message) {
-    document.getElementById("progressBar").style.width = perc + "%";
-    document.getElementById("progressMessage").innerHTML = message;
+function progressUpdate(category, newClass, message, percentage) {
+    const categoryElement = document.getElementById(`status_${category}`);
+    if (newClass == null) {
+        categoryElement.classList.remove('wip', 'done');
+    } else {
+        if (!categoryElement.classList.contains(newClass)) {
+            categoryElement.classList.remove('wip', 'done');
+            categoryElement.classList.add(newClass);
+        }
+    }
+    // Clear the progress bar if it exists
+    if (newClass != 'wip' && categoryElement.children.length === 1) {
+        categoryElement.children[0].remove();
+    }
+    if (message != null) {
+        categoryElement.innerHTML = message;
+    }
+    if (percentage != null) {
+        // If it doesn't have a progress bar, add it
+        if (categoryElement.children.length === 0) {
+            categoryElement.innerHTML += '<div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>';
+        }
+        // Otherwise, shift the width
+        if (categoryElement.children.length === 1) {
+            categoryElement.children[0].children[0].style.width = `${percentage}%`;
+        }
+    }
 }
 
 function createClick(event) {
@@ -491,7 +515,12 @@ function createClick(event) {
     document.getElementById('outputVideo').innerHTML = '<svg class="feather"><use href="assets/feather-sprite.svg#video" /></svg>';
     document.getElementById('outputVideo').classList.add('loading');
     document.getElementById('modal').style.display = "initial";
-    progressUpdate(0, 'Starting...');
+
+    // Set the defaults
+    progressUpdate(0, 'wip', '1. Creating paths...');
+    progressUpdate(1, null, '2. Interpolating frames...');
+    progressUpdate(2, null, '3. Stitching frames...');
+    progressUpdate(3, null, '4. Downloading...');
 
     DURATION_SECONDS = parseInt(document.getElementById('duration').value);
     const rawImage = document.getElementById('rawImage');
@@ -515,7 +544,6 @@ function createClick(event) {
     const loop = document.getElementById('loop').checked && shots.length > 2;
 
     pts = [];
-    progressUpdate(1, 'Creating frames...');
 
     for (var i = 0; i < shots.length; i++) {
         const x1 = parseInt(shots[i].rectangle.style.left.slice(0, -2)) * offsetScale;
@@ -529,7 +557,6 @@ function createClick(event) {
         pts.push(pts[1].clone());
         pts.push(pts[2].clone());
     }
-    progressUpdate(2, 'Interpolating...');
 
     var cps = []; // There will be two control points for each "middle" point, 1 ... len-2e
     for (var i = 0; i < pts.length - 2; i += 1) {
@@ -541,7 +568,6 @@ function createClick(event) {
             )
         );
     }
-    progressUpdate(3, 'Populating full paths...');
     if (loop) {
         pts = pts.slice(0, -2);
         cps = [].concat(cps.slice(-3, -2), cps.slice(0, -3));
@@ -553,7 +579,7 @@ function createClick(event) {
         paths.push(new Line(pts[0], pts[1]));
     } else if (loop) {
         for (var i = 0; i < shots.length; i++) {
-            paths.push(new CubicBezier(pts[i], cps[2 * i], cps[2*i + 1], pts[i+1]));
+            paths.push(new CubicBezier(pts[i], cps[2 * i], cps[2 * i + 1], pts[i + 1]));
         }
 
     } else {
@@ -569,12 +595,18 @@ function createClick(event) {
     }
 
     // Figure out the overall lengths (and percentage)
-    progressUpdate(4, 'Calculating all images...');
+    progressUpdate(0, 'done', '1. Created paths.');
+    progressUpdate(1, 'wip');
 
     // Download the video
     worker = new Worker('./js/create-video-worker.js', { type: "module" });
     worker.onmessage = function (event) {
-        progressUpdate(event.data.progress, event.data.message);
+        if (event.data.error) {
+            // TODO: Handle this...somehow.
+        }
+        if (event.data.stage) {
+            progressUpdate(event.data.stage, event.data.status, event.data.message, event.data.percentage);
+        }
         if (event.data.videoBlob) {
             const url = webkitURL.createObjectURL(event.data.videoBlob);
 
@@ -587,6 +619,9 @@ function createClick(event) {
             document.getElementById('outputVideo').classList.remove('loading');
             document.getElementById('outputVideo').innerHTML = '';
             document.getElementById('outputVideo').appendChild(video);
+
+            progressUpdate(2, 'done', '3. Stitched frames.');
+            progressUpdate(3, 'wip');
         }
     };
 
@@ -716,8 +751,8 @@ function drawCurvedPath(cps, pts, loop) {
         ctx.moveTo(pts[0].x, pts[0].y);
         for (var i = 1; i < pts.length; i++) {
             ctx.bezierCurveTo(
-                cps[2 * (i-1)].x, cps[2 * (i-1)].y,
-                cps[2 * (i-1) + 1].x, cps[2 * (i-1) + 1].y,
+                cps[2 * (i - 1)].x, cps[2 * (i - 1)].y,
+                cps[2 * (i - 1) + 1].x, cps[2 * (i - 1) + 1].y,
                 pts[i].x, pts[i].y);
         }
         ctx.stroke();

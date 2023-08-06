@@ -15,10 +15,7 @@ https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-
 https://github.com/feathericons/feather#license
 
 ## Things to do
-* Modal fix
-  * UI pass
-  * Split up the loading screens
-  * Show errors properly
+* Show errors properly in modal
 * UI of options
 * Hover/highlight/help text on where to drop.
 * Proper image handling of different filetypes.
@@ -26,10 +23,11 @@ https://github.com/feathericons/feather#license
 * Make it so that you can see the full path that it will follow?
 * Make it so that you can linger in some places for longer.
 * Fix the overlapped frames
+* Should mostly linear frames use a different tension?
 
 ## Known bugs
 1. When you move a frame, the layer preview doesn't update
-2. Only allows you to zoom in to 15x. Which is probably fine, but is adjustable.
+2. Only allows you to zoom in to 15x. Which is probably fine, but is adjustable if we need it.
 
 ## Author's Note
 If you're interested in programatically following bezier curves with ffmpeg's `zoompan`, I used to have this functionality until I ran into an inability to reparametize the curves by arc-length for smooth camera moves, and swapped to a fully in-browser solution. The relevant code is working around `62379f45044fd8b7254680064ad89b1367d3c420` or `9cdc77ba912cbb9914bdb120afd2f9cbf168a77e`.

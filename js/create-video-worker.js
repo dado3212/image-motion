@@ -39,32 +39,41 @@ self.onmessage = async function(event) {
             });
 
             self.postMessage({
-                progress: 4 + 46 * images.length / (event.data.duration * event.data.fps),
-                message: 'Creating frame ' + (images.length + 1) + ' out of ' + (event.data.duration * event.data.fps),
+                stage: 1,
+                status: 'wip',
+                message: null,
+                percentage: images.length / (event.data.duration * event.data.fps) * 100,
             });
         }
     }
 
     self.postMessage({
-        progress: 51,
-        message: 'Creating video',
+        stage: 1,
+        status: 'done',
+        message: '2. Interpolated frames.',
     });
-
+    self.postMessage({
+        stage: 2,
+        status: 'wip',
+        percentage: 0,
+    });
     const worker = new Worker('./ffmpeg-worker-mp4.js');
 
     worker.onmessage = function (e) {
         var msg = e.data;
         if (msg.type == 'stderr' || msg.type == 'stdout') {
-            let perc = 51;
             const regex = /frame=\s*(\d+)/;
             const match = msg.data.match(regex);
 
+            let perc = 0;
             if (match && match[1]) {
-                perc = parseInt(match[1]) / (event.data.duration * event.data.fps) * 49 + 51;
+                perc = parseInt(match[1]) / (event.data.duration * event.data.fps) * 100;
             }
+
             self.postMessage({
-                progress: perc,
-                message: msg.data,
+                stage: 2,
+                status: 'wip',
+                percentage: perc,
             });
         } else if (msg.type == 'done') {
             const blob = new Blob([msg.data.MEMFS[0].data], {
@@ -72,17 +81,14 @@ self.onmessage = async function(event) {
             });
 
             self.postMessage({
-                progress: 100,
-                message: 'Done',
                 videoBlob: blob,
             });
         } else if (msg.type == 'exit') {
-            self.postMessage({
-                progress: 100,
-                message: 'Process exited with code ' + msg.data,
-                error: true,
-            });
             if (msg.data != 0) {
+                self.postMessage({
+                    error: true,
+                    message: 'Process exited with code ' + msg.data,
+                });
                 worker.terminate();
             }
         }
@@ -90,9 +96,8 @@ self.onmessage = async function(event) {
 
     worker.onerror = function(_) {
         self.postMessage({
-            progress: 100,
-            message: 'Worker failed.',
             error: true,
+            message: 'Worker failed.',
         });
     };
 
