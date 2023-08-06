@@ -24,7 +24,6 @@ https://github.com/feathericons/feather#license
 * Make it so that you can't select white.
 * Make it so that you can see the full path that it will follow?
 * Adjust the min zoom?
-* Make it so that you can delete a frame?
 * Make it so that you can linger in some places for longer.
 * Fix the overlapped frames
 

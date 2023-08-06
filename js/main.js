@@ -151,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
             rectangleFrames[i].classList.add('moveable');
         }
     });
+
+    if (!document.getElementById('canvas').transferControlToOffscreen) {
+        // TODO: Figure out which browsers support this, maybe clean up the alert.
+        alert('This browser does not support offscreen canvases. Try Chrome?');
+    }
 });
 
 function uploadImage(file) {
@@ -383,15 +388,29 @@ function addScreenshot(rectangle) {
     const width = rectangleBounds.width / imageBounding.width * originalWidth;
     const height = rectangleBounds.height / imageBounding.height * originalHeight;
 
-    const imgString = screenshot(rawImage, x, y, width, height);
-
     // Create the new element
     const newDiv = document.createElement('div');
     newDiv.classList.add('snapshot');
 
     // Convert the canvas to an image and add it
     const image = new Image();
-    image.src = imgString;
+
+    let offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = 1080;
+    offscreenCanvas.height = 1920;
+    offscreenCanvas = offscreenCanvas.transferControlToOffscreen();
+
+    const scWorker = new Worker('./js/screenshot.js', { type: "module" });
+    scWorker.onmessage = function (event) {
+        image.src = event.data.src;
+    };
+    scWorker.postMessage({
+        canvas: offscreenCanvas,
+        imageSrc: rawImage.src,
+        frame: [x, y, width, height],
+    }, [offscreenCanvas]);
+
+    // image.src = imgString;
     newDiv.appendChild(image);
 
     // A title for the frame
@@ -527,45 +546,42 @@ function createClick(event) {
     // Figure out the overall lengths (and percentage)
     progressUpdate(4, 'Calculating all images...');
 
+    // Download the video
+    worker = new Worker('./js/create-video-worker.js', { type: "module" });
+    worker.onmessage = function (event) {
+        progressUpdate(event.data.progress, event.data.message);
+        if (event.data.videoBlob) {
+            const url = webkitURL.createObjectURL(event.data.videoBlob);
+
+            const video = document.createElement('video');
+            video.controls = true;
+            video.autoplay = true;
+            video.loop = true;
+            video.src = url;
+
+            document.getElementById('outputVideo').classList.remove('loading');
+            document.getElementById('outputVideo').innerHTML = '';
+            document.getElementById('outputVideo').appendChild(video);
+        }
+    };
+
+    const serializedPaths = [];
+    for (var i = 0; i < paths.length; i++) {
+        serializedPaths.push(paths[i].serialize());
+    }
+
     let offscreenCanvas = document.createElement('canvas');
     offscreenCanvas.width = 1080;
     offscreenCanvas.height = 1920;
+    offscreenCanvas = offscreenCanvas.transferControlToOffscreen();
 
-    if (offscreenCanvas.transferControlToOffscreen) {
-        offscreenCanvas = offscreenCanvas.transferControlToOffscreen();
-        worker = new Worker('./js/create-video-worker.js', { type: "module" });
-        worker.onmessage = function (event) {
-            progressUpdate(event.data.progress, event.data.message);
-            if (event.data.videoBlob) {
-                const url = webkitURL.createObjectURL(event.data.videoBlob);
-
-                const video = document.createElement('video');
-                video.controls = true;
-                video.autoplay = true;
-                video.loop = true;
-                video.src = url;
-
-                document.getElementById('outputVideo').classList.remove('loading');
-                document.getElementById('outputVideo').innerHTML = '';
-                document.getElementById('outputVideo').appendChild(video);
-            }
-        };
-
-        const serializedPaths = [];
-        for (var i = 0; i < paths.length; i++) {
-            serializedPaths.push(paths[i].serialize());
-        }
-
-        worker.postMessage({
-            canvas: offscreenCanvas,
-            imageSrc: rawImage.src,
-            paths: serializedPaths,
-            duration: DURATION_SECONDS,
-            fps: FPS,
-        }, [offscreenCanvas]);
-    } else {
-        progressUpdate(100, 'Offscreen canvas is not supported in this browser.');
-    }
+    worker.postMessage({
+        canvas: offscreenCanvas,
+        imageSrc: rawImage.src,
+        paths: serializedPaths,
+        duration: DURATION_SECONDS,
+        fps: FPS,
+    }, [offscreenCanvas]);
 }
 
 function clearFrames() {
