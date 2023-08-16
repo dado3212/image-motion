@@ -22,7 +22,6 @@ https://github.com/feathericons/feather#license
 * Fix the overlapped frames
 * Should mostly linear frames use a different tension?
 * Favicon + title + og + sitemap + analytics + all that jazz
-* iOS mobile support?
   * Show detailed browser support/instructions for offscreenCanvas
 * Customize aspect ratio
 * Preview?

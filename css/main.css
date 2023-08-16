@@ -255,7 +255,7 @@ body {
 .modal-content {
     position: absolute;
     top: 10%;
-    left: calc(50% - 325px);
+    left: calc(50% - 325px - 10px);
     width: 650px;
     height: 80%;
     border-radius: 10px;
@@ -359,4 +359,59 @@ body {
     color: #ddd;
     margin-left: auto;
     cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    #upload {
+        padding: 20px 0px;
+
+        text-align: center;
+    }
+
+    #sidebar {
+        width: 300px;
+    }
+}
+
+@media (max-width: 750px) {
+    #sidebar {
+        width: 250px;
+    }
+}
+
+/* Swap to different orientation */
+@media (max-width: 650px) {
+    .main {
+        flex-direction: column;
+    }
+
+    #toolbox {
+        flex-direction: row;
+        height: 46px;
+        align-items: center;
+        width: auto;
+        padding: 0;
+    }
+
+    #sidebar {
+        width: auto;
+        height: 45vh;
+    }
+
+    .modal-content {
+        width: 80vw;
+        left: calc(50% - 40vw - 10px);
+        flex-direction: column;
+    }
+
+    #outputVideo {
+        max-height: 50vh;
+    }
+
+    #closeModal {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 6;
+    }
 }
