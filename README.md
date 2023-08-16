@@ -6,7 +6,7 @@ https://github.com/Kagami/ffmpeg.js/
 
 /Applications/Google Chrome.app/Contents/MacOS/Google\ Chrome --allow-file-access-from-files
 
-python -m SimpleHTTPServer 8000
+python3 -m http.server 8000
 
 https://fjorge.com/insights/blog/can-bezier-curves-be-quickly-parameterized-by-arc-length/
 
@@ -16,13 +16,16 @@ https://github.com/feathericons/feather#license
 
 ## Things to do
 * Show errors properly in modal
-* Hover/highlight/help text on where to drop.
-* Proper image handling of different filetypes.
-* Make it so that you can't select white.
+* Make it so that you can't select out of bounds.
 * Make it so that you can see the full path that it will follow?
 * Make it so that you can linger in some places for longer.
 * Fix the overlapped frames
 * Should mostly linear frames use a different tension?
+* Favicon + title + og + sitemap + analytics + all that jazz
+* iOS mobile support?
+  * Show detailed browser support/instructions for offscreenCanvas
+* Customize aspect ratio
+* Preview?
 
 ## Known bugs
 1. When you move a frame, the layer preview doesn't update

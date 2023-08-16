@@ -27,7 +27,8 @@ self.onmessage = async function(event) {
     let images = [];
     for (var i = 0; i < paths.length; i++) {
         let numFrames = (event.data.duration * event.data.fps) * paths[i].length / totalLength;
-        let frames = paths[i].frames(numFrames);
+        let frames = paths[i].frames(numFrames, i === paths.length - 1);
+        console.log(numFrames);
 
         for (var j = 0; j < frames.length; j++) {
             let imgString = await screenshot(rawImg, offscreenCanvas, offscreenContext, frames[j][0], frames[j][1], frames[j][2], frames[j][3]);
@@ -46,6 +47,8 @@ self.onmessage = async function(event) {
             });
         }
     }
+    console.log(images.length);
+    console.log( (event.data.duration * event.data.fps));
 
     self.postMessage({
         stage: 1,

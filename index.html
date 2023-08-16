@@ -21,7 +21,14 @@
                 </svg>
             </span>
         </div>
-        <div id="container">
+        <div id="container" class="predrop">
+            <div id="upload">
+                <svg class="feather big">
+                    <use href="assets/feather-sprite.svg#image"></use>
+                </svg>
+                <p>Drag an image here...</p>
+                <input type="file" id="fileSelector" accept="image/*" />
+            </div>
             <div id="image">
                 <canvas id="canvas"></canvas>
                 <img id="rawImage">

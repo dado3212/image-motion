@@ -99,6 +99,29 @@ body {
     overscroll-behavior-x: none;
 }
 
+#container.predrop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#upload {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 6px #ddd dashed;
+    border-radius: 15px;
+    padding: 40px 80px;
+
+    text-align: center;
+}
+
+#upload.hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#fileSelector {
+    text-align-last: center;
+}
+
 #sidebar {
     width: 350px;
     background-color: #3d3d3d;
@@ -324,6 +347,12 @@ body {
     stroke-linecap: round;
     stroke-linejoin: round;
     fill: none;
+}
+
+.feather.big {
+    width: 140px;
+    height: 140px;
+    stroke-width: 1;
 }
 
 #closeModal {

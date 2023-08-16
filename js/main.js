@@ -1,6 +1,5 @@
 import {
-    isNaturalScrolling,
-    screenshot
+    isNaturalScrolling
 } from './util.js'
 
 import {
@@ -38,8 +37,6 @@ const rectangleHeight = 320;
 let originalWidth = 0;
 let originalHeight = 0;
 
-let file_name = '';
-
 var canvas, ctx;
 let worker;
 
@@ -59,9 +56,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rectangle').style.width = rectangleWidth + 'px';
     document.getElementById('rectangle').style.height = rectangleHeight + 'px';
 
+    const fileSelector = document.getElementById('fileSelector');
+
     // Prevent default behavior for the dragover and drop events to allow dropping content
     body.addEventListener('dragover', function (evt) {
         evt.preventDefault();
+
+        const upload = document.getElementById('upload');
+        if (upload) {
+            upload.classList.add('hover');
+        }
+    });
+    body.addEventListener('dragleave', function (evt) {
+        evt.preventDefault();
+
+        const upload = document.getElementById('upload');
+        if (upload) {
+            upload.classList.remove('hover');
+        }
+    });
+
+    // Set up the button for file selection
+    fileSelector.addEventListener('change', function (event) {
+        // Clear the upload element, and remove the predrop flex styling
+        const upload = document.getElementById('upload');
+        if (upload) {
+            upload.remove();
+        }
+        document.getElementById('container').classList.remove('predrop');
+
+        // Load the image
+        uploadImage(event.target.files[0]);
     });
 
     body.addEventListener('drop', function (evt) {
@@ -69,20 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
         evt.stopPropagation();
         evt.preventDefault();
 
-        // If I ever want to use an upload from somewhere else?
-        // var imageUrl = evt.dataTransfer.getData('URL');
-
         // Get the dropped file from the event data
         const file = evt.dataTransfer.files[0];
-        file_name = file.name;
 
-        if (file.type === 'image/tiff') {
-            // Yell about this one :D
-            alert('This currently doesn\'t accept TIFFs.');
-            // brew install imagemagick
-            // convert -flatten -density 72 -depth 16 -quality 75 -units PixelsPerInch -interlace JPEG -define jpeg:dct-method=float "$file" ./converted/"$base".jpg
+        if (!file.type.startsWith('image/')) {
+            const upload = document.getElementById('upload');
+            if (upload) {
+                upload.classList.remove('hover');
+            }
+
+            alert('This only accepts images, the file is "' + file.type + '".');
             return;
         }
+
+        // Clear the upload element, and remove the predrop flex styling
+        const upload = document.getElementById('upload');
+        if (upload) {
+            upload.remove();
+        }
+        document.getElementById('container').classList.remove('predrop');
 
         // Load the image
         uploadImage(file);

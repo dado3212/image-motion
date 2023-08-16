@@ -57,10 +57,10 @@ class Path {
         return l;
     }
 
-    frames(numFrames) {
+    frames(numFrames, lastOne) {
         const avgDistance = this._length / numFrames;
         let f = [];
-        for (let i = 0; i <= numFrames; i++) {
+        for (let i = 0; i < (lastOne ? (numFrames + 1) : numFrames); i++) {
             const targetDistance = avgDistance * i;
             let targetFloat = this._pieces[this._pieces.length - 1][1];
             for (let j = 0; j < this._pieces.length; j++) {

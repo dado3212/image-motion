@@ -14,33 +14,6 @@ function isNaturalScrolling() {
     return answer;
 }
 
-function screenshot(image, x, y, width, height) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    // Set the canvas dimensions
-    canvas.width = 1080;
-    canvas.height = 1920;
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.drawImage(
-        image,
-        // Source
-        x,
-        y,
-        width,
-        height,
-        // Destination
-        0,
-        0,
-        1080,
-        1920,
-    );
-
-    return canvas.toDataURL('image/jpeg', 0.9 /* max quality */);
-}
-
 // Courtesy of https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-L8
 function convertDataURIToBinary(dataURI) {
     var base64 = dataURI.replace(/^data[^,]+,/, '');
@@ -56,6 +29,5 @@ function convertDataURIToBinary(dataURI) {
 
 export {
     isNaturalScrolling,
-    convertDataURIToBinary,
-    screenshot
+    convertDataURIToBinary
 }
