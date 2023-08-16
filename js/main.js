@@ -363,6 +363,17 @@ function end() {
     container.removeEventListener('pointermove', move);
     container.removeEventListener('pointerup', end);
     container.removeEventListener('pointerleave', end);
+
+    // When you've finished adjusting, update the image
+    for (var i = 0; i < shots.length; i++) {
+        if (shots[i].rectangle == movingRectangle) {
+            shots[i].snapshot.replaceChild(
+                getScreenshotImageForRectangle(movingRectangle),
+                shots[i].snapshot.children[0]
+            );
+            break;
+        }
+    }
 }
 
 function activate(event) {
@@ -417,7 +428,7 @@ function addRectangle() {
     return newRectangle;
 }
 
-function addScreenshot(rectangle) {
+function getScreenshotImageForRectangle(rectangle) {
     // Get the last element that was added, and the x, y
     const rectangleBounds = rectangle.getBoundingClientRect();
     const rawImage = document.getElementById('rawImage');
@@ -427,10 +438,6 @@ function addScreenshot(rectangle) {
     const y = parseInt(rectangle.style.top.slice(0, -2)) / imageBounding.height * scale * originalHeight;
     const width = rectangleBounds.width / imageBounding.width * originalWidth;
     const height = rectangleBounds.height / imageBounding.height * originalHeight;
-
-    // Create the new element
-    const newDiv = document.createElement('div');
-    newDiv.classList.add('snapshot');
 
     // Convert the canvas to an image and add it
     const image = new Image();
@@ -449,6 +456,16 @@ function addScreenshot(rectangle) {
         imageSrc: rawImage.src,
         frame: [x, y, width, height],
     }, [offscreenCanvas]);
+
+    return image;
+}
+
+function addScreenshot(rectangle) {
+    // Create the new element
+    const newDiv = document.createElement('div');
+    newDiv.classList.add('snapshot');
+
+    const image = getScreenshotImageForRectangle(rectangle);
 
     // image.src = imgString;
     newDiv.appendChild(image);
