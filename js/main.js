@@ -188,8 +188,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (!document.getElementById('canvas').transferControlToOffscreen) {
-        // TODO: Figure out which browsers support this, maybe clean up the alert.
-        alert('This browser does not support offscreen canvases. Try Chrome?');
+        if (/iP(hone|od|ad)/.test(navigator.platform)) {
+            alert(`Your iOS version is not supported. Please use iOS 16.4+, or swap to a desktop computer.`);
+        } else {
+            alert('This browser does not support offscreen canvases. Try an updated desktop browser: https://caniuse.com/mdn-api_htmlcanvaselement_transfercontroltooffscreen');
+        }
     }
 });
 
