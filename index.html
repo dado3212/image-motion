@@ -2,42 +2,64 @@
 <html lang="en">
 
 <head>
+    <title>Image Motion</title>
+
     <!-- Meta tags -->
     <meta name="robots" content="index, follow, archive">
-    <meta name="description" content="Bring static images to life by turning them into exciting videos with zooms and pans. Ken Burns like it's never been done before!">
+    <meta name="description"
+        content="Bring static images to life by turning them into exciting videos with zooms and pans. Ken Burns like it's never been done before!">
+    <meta name="keywords" content="image, motion, ken, burns, ken burns, static, image, pan, zoom, video">
     <meta charset="utf-8" />
     <meta http-equiv="Cache-control" content="public">
 
-    <!-- SEO and Semantic Markup -->
+    <!-- Semantic Markup -->
+    <meta property="og:title" content="Image Motion">
+    <meta property="og:type" content="website">
+    <meta property="og:image"
+        content="https://alexbeals.com/projects/image-motion/assets/favicon/android-chrome-512x512.png">
+    <meta property="og:url" content="https://alexbeals.com/projects/image-motion/">
+    <meta property="og:description"
+        content="Bring static images to life by turning them into exciting videos with zooms and pans. Ken Burns like it's never been done before!">
+
     <meta name="twitter:card" content="summary">
     <meta name="twitter:creator" content="@alex_beals">
 
-    <!-- Fix for FB crawler bugs -->
-    <meta property="og:title" content="Image Motion">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://alexbeals.com/projects/image-motion/assets/image.png">
-    <meta property="og:url" content="https://alexbeals.com/projects/image-motion/">
-    <meta property="og:description" content="Bring static images to life by turning them into exciting videos with zooms and pans. Ken Burns like it's never been done before!">
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="./assets/favicon/site.webmanifest">
+    <link rel="mask-icon" href="./assets/favicon/safari-pinned-tab.svg" color="#2b2b2b">
+    <link rel="shortcut icon" href="./assets/favicon/favicon.ico">
+    <meta name="msapplication-TileColor" content="#00aba9">
+    <meta name="msapplication-config" content="./assets/favicon/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Google Analytics -->
+    <script>
+        function loadGoogleTag() {
+            var script = document.createElement('script');
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-383671542';
+            script.async = true;
+            document.head.appendChild(script);
+        }
 
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-    <!-- Favicons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicon/manifest.json">
-    <link rel="mask-icon" href="assets/favicon/safari-pinned-tab.svg" color="#624145">
-    <link rel="shortcut icon" href="assets/favicon/favicon.ico">
-    <meta name="msapplication-config" content="assets/favicon/browserconfig.xml">
-    <meta name="theme-color" content="#624145">
+        gtag('config', 'G-383671542');
 
-    <title>Image Motion</title>
+        loadGoogleTag();
+    </script>
+
+    <!-- Actual files -->
     <link rel="stylesheet" type="text/css" href="css/main.css">
-
     <script type="module" src="js/main.js"></script>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body dropzone>
@@ -64,7 +86,7 @@
             </div>
             <div id="image">
                 <canvas id="canvas"></canvas>
-                <img id="rawImage">
+                <img id="rawImage" alt="">
             </div>
         </div>
         <div id="sidebar">
