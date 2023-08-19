@@ -1,12 +1,12 @@
 # <img src="/assets/favicon/android-chrome-192x192.png?raw=true" width="30" alt="Logo"/> Image Motion
 
-## The Problem
+### The Problem
 My brother had some art pieces that he had created that he wanted to talk about on his Instagram. This involved moving a camera over the image. Unfortunately there was no good way to get this to be smooth manually.
 
-## The Solution
+### The Solution
 I created Image Motion as a tool to turn static images into videos. With a normal Ken Burns effect you can define two frames and it will tween between them. This is a superpowered version of that, allowing you to define multiple frames (at differing zooms and locations) and seamlessly pan over them, for however long a video you want to make.
 
-## Details
+### Details
 My first use of Web Workers and WebASM through the fmpeg port. If you want to check it out, it's live at https://alexbeals.com/projects/image-motion.  Read more about the project [on my blog](http://blog.alexbeals.com/posts/image-motion).
 
 ## Credits
@@ -28,7 +28,6 @@ Thanks to a variety of resources.
 ### Misc
 - This [blog post](https://fjorge.com/insights/blog/can-bezier-curves-be-quickly-parameterized-by-arc-length/) around reparameterized bezier curves by arc length (and how there's not a closed form solution).
 - This [Gist](https://gist.github.com/ilblog/5fa2914e0ad666bbb85745dbf4b3f106#file-clock-html-L8) with some practical examples of ffmpeg web workers
--
 
 ---
 
