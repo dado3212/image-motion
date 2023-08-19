@@ -122,6 +122,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTool !== Tools.ADD) {
             return;
         }
+        // If there's no image, we don't need to track because we don't SHOW
+        // the rectangle
+        if (!canvas && !ctx) {
+            return;
+        }
         var rectangle = document.getElementById('rectangle');
 
         // Calculate the new position of the rectangle based on the cursor position
@@ -160,8 +165,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('addFrame').classList.add('selected');
         currentTool = Tools.ADD;
 
-        // Make the rectangle visible
-        document.getElementById('rectangle').style.display = "initial";
+        // Make the rectangle visible (if an image exists)
+        if (canvas && ctx) {
+            document.getElementById('rectangle').style.display = "initial";
+        }
         // Mark all frames as non-moveable
         const rectangleFrames = document.querySelectorAll('.rectangle.frame');
         for (var i = 0; i < rectangleFrames.length; i++) {

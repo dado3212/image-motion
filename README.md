@@ -21,7 +21,6 @@ https://github.com/feathericons/feather#license
 * Make it so that you can linger in some places for longer.
 * Fix the overlapped frames
 * Should mostly linear frames use a different tension?
-* Favicon + title + og + sitemap + analytics + all that jazz
 * Customize aspect ratio
 * Preview?
 
