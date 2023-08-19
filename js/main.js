@@ -229,7 +229,7 @@ function uploadImage(file) {
             rawImage.height = tabHeight;
 
             minScale = Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
-            maxScale = 15 * Math.min(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
+            maxScale = 10 * Math.max(rectangleHeight / rawImage.height, rectangleWidth / rawImage.width);
 
             // Set up the canvas
             canvas = document.getElementById('canvas');
@@ -279,7 +279,11 @@ function setupImageListeners() {
 
         // Zoom mode
         if (e.ctrlKey) {
-            var newScale = scale - e.deltaY * 0.01;
+            if (e.deltaY > 80 || e.deltaY < -80) {
+                var newScale = scale - e.deltaY * 0.001;
+            } else {
+                var newScale = scale - e.deltaY * 0.01;
+            }
 
             // Limit the scaling from fully zoomed out to 10x
             newScale = Math.max(minScale, Math.min(newScale, maxScale));
