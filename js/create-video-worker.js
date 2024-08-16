@@ -4,6 +4,7 @@ import {
     Line,
     QuadraticBezier,
     CubicBezier,
+    Hold,
 } from './bezier.js'
 
 import {
@@ -20,13 +21,21 @@ self.onmessage = async function(event) {
     const rawImg = await createImageBitmap(new Blob([blob], { type: 'image/jpeg' }));
 
     let totalLength = 0;
+    let parsePercentage = event.data.duration * event.data.fps;
     for (var j = 0; j < paths.length; j++) {
         totalLength += paths[j].length;
+        if (paths[j].constructor.name == 'Hold') {
+            parsePercentage += paths[j].duration * event.data.fps;
+        }
     }
 
     let images = [];
     for (var i = 0; i < paths.length; i++) {
         let numFrames = (event.data.duration * event.data.fps) * paths[i].length / totalLength;
+        // Have to special case hold
+        if (paths[i].constructor.name == 'Hold') {
+            numFrames = paths[i].duration * event.data.fps;
+        }
         let frames = paths[i].frames(numFrames, i === paths.length - 1);
         console.log(numFrames);
 
@@ -43,12 +52,12 @@ self.onmessage = async function(event) {
                 stage: 1,
                 status: 'wip',
                 message: null,
-                percentage: images.length / (event.data.duration * event.data.fps) * 100,
+                percentage: images.length / (parsePercentage) * 100,
             });
         }
     }
     console.log(images.length);
-    console.log( (event.data.duration * event.data.fps));
+    console.log(parsePercentage);
 
     self.postMessage({
         stage: 1,
@@ -70,7 +79,7 @@ self.onmessage = async function(event) {
 
             let perc = 0;
             if (match && match[1]) {
-                perc = parseInt(match[1]) / (event.data.duration * event.data.fps) * 100;
+                perc = parseInt(match[1]) / (parsePercentage) * 100;
             }
 
             self.postMessage({
@@ -146,8 +155,6 @@ async function screenshot(image, offscreenCanvas, ctx, x, y, width, height) {
 
     const dataURL = new FileReaderSync().readAsDataURL(blob);
     return dataURL; // string
-
-    // return canvas.toDataURL(';
 }
 
 function deserialize(arrayPaths) {
@@ -165,6 +172,9 @@ function deserialize(arrayPaths) {
                 break;
             case 'CubicBezier':
                 paths.push(new CubicBezier(f1, new Point(info.cp1.x, info.cp1.y), new Point(info.cp2.x, info.cp2.y), f2));
+                break;
+            case 'Hold':
+                paths.push(new Hold(f1, info.duration));
                 break;
             default:
                 console.log('Unknown deserialization');

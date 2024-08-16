@@ -131,10 +131,32 @@ class CubicBezier extends Path {
     }
 }
 
+// A bastardization of the 'Path' naming, but here we are
+class Hold extends Path {
+
+    constructor(frame1, duration) {
+        super(frame1, frame1)
+        this.duration = duration;
+    }
+
+    get length() {
+        return 0;
+    }
+
+    frames(numFrames, lastOne) {
+        let f = [];
+        for (let i = 0; i < (lastOne ? (numFrames + 1) : numFrames); i++) {
+            f.push([this.f1.x, this.f1.y, this.f1.width, this.f1.height]);
+        }
+        return f;
+    }
+}
+
 export {
     Point,
     Frame,
     Line,
     QuadraticBezier,
     CubicBezier,
+    Hold,
 }

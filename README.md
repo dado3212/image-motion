@@ -18,7 +18,6 @@ https://github.com/feathericons/feather#license
 * Show errors properly in modal
 * Make it so that you can't select out of bounds.
 * Make it so that you can see the full path that it will follow?
-* Make it so that you can linger in some places for longer.
 * Fix the overlapped frames
 * Should mostly linear frames use a different tension?
 * Customize aspect ratio

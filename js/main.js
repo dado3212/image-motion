@@ -8,6 +8,7 @@ import {
     Line,
     QuadraticBezier,
     CubicBezier,
+    Hold,
 } from './bezier.js'
 
 // Global context
@@ -16,6 +17,7 @@ var shots = [
      * {
      *  rectangle: div,
      *  snapshot: div,
+     *  delay: int,
      * }
      */
 ];
@@ -355,6 +357,7 @@ function setupImageListeners() {
         shots.push({
             rectangle: newRectangle,
             snapshot: newSnapshot,
+            duration: 0,
         })
 
         drawSplines();
@@ -489,6 +492,15 @@ function addScreenshot(rectangle) {
     newSpan.innerHTML = 'Frame ' + (shots.length + 1);
     newDiv.appendChild(newSpan);
 
+    // And a duration button
+    const durationButton = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    durationButton.classList.add('feather', 'clickable', 'duration');
+    const clock = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    clock.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'assets/feather-sprite.svg#clock');
+    durationButton.appendChild(clock);
+    durationButton.addEventListener('click', setTimeClick);
+    newDiv.appendChild(durationButton);
+
     // And a removal button
     const removeButton = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     removeButton.classList.add('feather', 'clickable');
@@ -501,6 +513,58 @@ function addScreenshot(rectangle) {
     document.getElementById('frames').appendChild(newDiv);
 
     return newDiv;
+}
+
+// Handles holding on a given frame for a number of seconds
+function setTimeClick(evt) {
+    // Get the frame you clicked on
+    let selectedSnapshot;
+    let selectedButton;
+    if (evt.target.nodeName == 'use') {
+        selectedSnapshot = evt.target.parentNode.parentNode;
+        selectedButton = evt.target.parentNode;
+    } else {
+        selectedSnapshot = evt.target.parentNode;
+        selectedButton = evt.target;
+    }
+
+    // Get the index
+    let allSnapshots = document.querySelectorAll('.snapshot');
+    for (var i = 0; i < allSnapshots.length; i++) {
+        if (allSnapshots[i] == selectedSnapshot) {
+            break;
+        }
+    }
+
+    // Set the hold duration
+    let duration = parseInt(prompt("How long do you want to hold on this frame (in seconds)?", 0), 10);
+    if (isNaN(duration)) {
+        duration = 0;
+    }
+    shots[i].duration = duration;
+
+    if (duration > 0) {
+        // Update the UI
+        selectedButton.querySelector('use').setAttribute('href', 'assets/feather-sprite.svg#circle');
+        // (If the duration is already set then update the duration, otherwise add the UI element)
+        let text = selectedButton.parentNode.querySelector('.duration-text');
+        if (text) {
+            text.innerHTML = duration;
+        } else {
+            text = document.createElement('p');
+            text.classList.add('duration-text');
+            text.innerHTML = duration;
+            selectedButton.parentNode.appendChild(text);
+        }
+    } else {
+        // Update the UI
+        selectedButton.querySelector('use').setAttribute('href', 'assets/feather-sprite.svg#clock');
+        // (If the duration is already set then update the duration, otherwise add the UI element)
+        let text = selectedButton.parentNode.querySelector('.duration-text');
+        if (text) {
+            text.remove();
+        }
+    }
 }
 
 function removeFrameClick(evt) {
@@ -637,22 +701,46 @@ function createClick(event) {
     // Create all of the paths
     let paths = [];
     if (shots.length == 2) {
+        if (shots[0].duration > 0) {
+            paths.push(new Hold(pts[0], shots[0].duration));
+        }
         paths.push(new Line(pts[0], pts[1]));
+        if (shots[1].duration > 0) {
+            paths.push(new Hold(pts[1], shots[1].duration));
+        }
     } else if (loop) {
+        // If you're looping then all the points are bezier
         for (var i = 0; i < shots.length; i++) {
+            if (shots[i].duration > 0) {
+                paths.push(new Hold(pts[i], shots[i].duration));
+            }
             paths.push(new CubicBezier(pts[i], cps[2 * i], cps[2 * i + 1], pts[i + 1]));
         }
-
+        if (shots[i].duration > 0) {
+            paths.push(new Hold(pts[i], shots[i].duration));
+        }
     } else {
+        if (shots[0].duration > 0) {
+            paths.push(new Hold(pts[0], shots[0].duration));
+        }
         // From point 0 to point 1 is a quadratic bezier
         paths.push(new QuadraticBezier(pts[0], cps[0], pts[1]));
+        if (shots[1].duration > 0) {
+            paths.push(new Hold(pts[1], shots[1].duration));
+        }
         // For all middle points, it's cubic beziers
         for (var i = 2; i < shots.length - 1; i += 1) {
             paths.push(new CubicBezier(pts[i - 1], cps[(2 * (i - 1) - 1)], cps[(2 * (i - 1))], pts[i]));
+            if (shots[i].duration > 0) {
+                paths.push(new Hold(pts[i], shots[i].duration));
+            }
         }
-        // And the final one is a quadratic bezier (unless you're looping, TODO)
+        // And the final one is a quadratic bezier
         i = shots.length - 1;
         paths.push(new QuadraticBezier(pts[i - 1], cps[(2 * (i - 1) - 1)], pts[i]));
+        if (shots[i].duration > 0) {
+            paths.push(new Hold(pts[i], shots[i].duration));
+        }
     }
 
     // Figure out the overall lengths (and percentage)
