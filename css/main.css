@@ -199,6 +199,8 @@ body {
     padding: 5px;
 
     background-color: #525252;
+
+    position: relative;
 }
 
 .snapshot:last-of-type {
@@ -428,5 +430,9 @@ body {
         top: 10px;
         right: 10px;
         z-index: 6;
+    }
+
+    .duration-text {
+        right: 35px;
     }
 }
